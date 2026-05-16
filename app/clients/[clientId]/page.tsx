@@ -18,6 +18,9 @@ import { mockActivity } from "@/data/mock-activity";
 import { mockInvoices, mockQuotes } from "@/data/mock-billing";
 import { mockFiles } from "@/data/mock-files";
 import { StatCard } from "@/components/stat-card";
+import { WorkspaceSection } from "@/components/workspace-section";
+import { EmptyState } from "@/components/empty-state";
+import { WorkspaceItem } from "@/components/workspace-item";
 
 const statusVariants = {
   Lead: "secondary",
@@ -130,55 +133,31 @@ export default async function ClientDetailPage({
                 <StatCard label="Files" value={clientFiles.length} />
                 </div>
 
-                <div className="rounded-xl border">
-                <div className="border-b p-4">
-                    <h3 className="font-semibold">Projects</h3>
-                    <p className="text-sm text-slate-500">
-                    Work currently attached to this client.
-                    </p>
-                </div>
-
-                <div className="rounded-xl border">
-                  <div className="border-b p-4">
-                    <h3 className="font-semibold">Activity Timeline</h3>
-                    <p className="text-sm text-slate-500">
-                      Recent actions and updates related to this client.
-                    </p>
-                  </div>
-
+                <WorkspaceSection
+                  title="Activity Timeline"
+                  description="Recent actions and updates related to this client."
+                >
                   <div className="divide-y">
                     {clientActivity.length > 0 ? (
                       clientActivity.map((activity) => (
-                        <div key={activity.id} className="p-4">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <p className="font-medium">{activity.message}</p>
-                              <p className="mt-1 text-sm text-slate-500">
-                                {activity.type}
-                              </p>
-                            </div>
-
-                            <div className="text-right text-sm text-slate-500">
-                              {activity.createdAt}
-                            </div>
-                          </div>
-                        </div>
+                        <WorkspaceItem
+                          key={activity.id} 
+                          title={activity.message}
+                          description={activity.type}
+                          metaTop={activity.createdAt}
+                            />
                       ))
                     ) : (
-                      <div className="p-4 text-sm text-slate-500">
-                        No activity recorded yet.
-                      </div>
+                      <EmptyState message="No activity recorded yet." />
                     )}
                   </div>
-                </div>
+                </WorkspaceSection>
 
-                <div className="rounded-xl border">
-                  <div className="border-b p-4">
-                    <h3 className="font-semibold">Billing</h3>
-                    <p className="text-sm text-slate-500">
-                      Quotes and invoices connected to this client.
-                    </p>
-                  </div>
+                <WorkspaceSection
+              title= "Billing"
+              description="Quotes and invoices connected to this client."
+              >
+                 
 
                   <div className="grid gap-4 p-4 md:grid-cols-2">
                     <div>
@@ -186,16 +165,15 @@ export default async function ClientDetailPage({
                       {clientQuotes.length > 0 ? (
                         <div className="space-y-2">
                           {clientQuotes.map((quote) => (
-                            <div key={quote.id} className="rounded-xl border p-3 text-sm">
-                              <p className="font-medium">{quote.title}</p>
-                              <p className="text-slate-500">
-                                ${quote.amount} · {quote.status}
-                              </p>
-                            </div>
+                            <WorkspaceItem
+                              key={quote.id}
+                              title={quote.title}
+                              description={`$${quote.amount} · ${quote.status}`}
+                            />
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm text-slate-500">No quotes yet.</p>
+                        <EmptyState message="No quotes yet." />
                       )}
                     </div>
 
@@ -204,22 +182,25 @@ export default async function ClientDetailPage({
                       {clientInvoices.length > 0 ? (
                         <div className="space-y-2">
                           {clientInvoices.map((invoice) => (
-                            <div key={invoice.id} className="rounded-xl border p-3 text-sm">
-                              <p className="font-medium">{invoice.title}</p>
-                              <p className="text-slate-500">
-                                ${invoice.amount} · {invoice.status}
-                              </p>
-                            </div>
+                            <WorkspaceItem
+                              key={invoice.id}
+                              title={invoice.title}
+                              description={`$${invoice.amount} · ${invoice.status}`}
+                            />
                           ))}
                         </div>
                       ) : (
-                        <p className="text-sm text-slate-500">No invoices yet.</p>
+                        <EmptyState message="No invoices yet." />
                       )}
                     </div>
                   </div>
-                </div>
+                </WorkspaceSection>
 
-                <div className="divide-y">
+                <WorkspaceSection
+                  title="Projects"
+                  description="Work currently attached to this client."
+                >
+                  <div className="divide-y">
                     {clientProjects.length > 0 ? (
                     clientProjects.map((project) => (
                         <Link
@@ -227,92 +208,70 @@ export default async function ClientDetailPage({
                         href={`/projects/${project.id}`}
                         className="block p-4 hover:bg-slate-50"
                         >
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                            <p className="font-medium">{project.name}</p>
-                            <p className="mt-1 text-sm text-slate-500">
-                                {project.description}
-                            </p>
-                            </div>
-
-                            <div className="text-right text-sm">
-                            <p className="font-medium">{project.progress}%</p>
-                            <p className="text-slate-500">{project.status}</p>
-                            </div>
-                        </div>
+                        <WorkspaceItem
+                            title={project.name}
+                            description={project.description}
+                            metaTop={`${project.progress}%`}
+                            metaBottom={project.status}
+                        />
                         </Link>
                     ))
                     ) : (
-                    <div className="p-4 text-sm text-slate-500">
-                        No projects attached to this client yet.
-                    </div>
+                    <EmptyState
+                      message="No projects attached to this client yet."
+                    />
                     )}
                 </div>
-                
-                <div className="rounded-xl border">
-                  <div className="border-b p-4">
-                    <h3 className="font-semibold">Files</h3>
-                    <p className="text-sm text-slate-500">
-                      Documents, references, and deliverables attached here.
-                    </p>
-                  </div>
+                </WorkspaceSection>
+
+                <WorkspaceSection
+                title= "Files"
+                description="Documents, references, and deliverables attached here."
+                >
 
                   <div className="divide-y">
                     {clientFiles.length > 0 ? (
                       clientFiles.map((file) => (
-                        <div key={file.id} className="flex items-start justify-between gap-4 p-4">
-                          <div>
-                            <p className="font-medium">{file.name}</p>
-                            <p className="mt-1 text-sm text-slate-500">{file.type}</p>
-                          </div>
-
-                          <div className="text-right text-sm text-slate-500">
-                            <p>{file.size}</p>
-                            <p>{file.uploadedAt}</p>
-                          </div>
-                        </div>
+                        <WorkspaceItem
+                        key={file.id} 
+                        title={file.name}
+                        description={file.type}
+                        metaTop={file.size}
+                        metaBottom={file.uploadedAt}                      
+                        />
                       ))
                     ) : (
-                      <div className="p-4 text-sm text-slate-500">
-                        No files attached yet.
-                      </div>
+                      <EmptyState
+                        message="No files attached yet."
+                      />
                     )}
                   </div>
-                </div>
-                <div className="rounded-xl border">
-                    <div className="border-b p-4">
-                      <h3 className="font-semibold">Notes</h3>
-                      <p className="text-sm text-slate-500">
-                        Relationship notes, decisions, reminders, and project context.
-                      </p>
-                    </div>
+                </WorkspaceSection>
+
+                <WorkspaceSection
+                  title="Notes"
+                    description="Relationship notes, decisions, reminders, and project context."
+                    >
 
                     <div className="divide-y">
                       {clientNotes.length > 0 ? (
                         clientNotes.map((note) => (
-                          <div key={note.id} className="p-4">
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <p className="font-medium">{note.title}</p>
-                                <p className="mt-1 text-sm text-slate-500">{note.body}</p>
-                              </div>
-
-                              <div className="text-right text-sm">
-                                <p className="font-medium">{note.type}</p>
-                                <p className="text-slate-500">{note.createdAt}</p>
-                              </div>
-                            </div>
-                          </div>
+                          <WorkspaceItem
+                            key={note.id}
+                            title={note.title}
+                            description={note.body}
+                            metaTop={note.type}
+                            metaBottom={note.createdAt}
+                          />
                         ))
                       ) : (
-                        <div className="p-4 text-sm text-slate-500">
-                          No notes attached to this client yet.
-                        </div>
+                        <EmptyState
+                          message ="No notes attached to this client yet."
+                        />
                       )}
                     </div>
-                  </div>
-
-                </div>
+                </WorkspaceSection>           
+                  
             </CardContent>
         </Card>
       </div>

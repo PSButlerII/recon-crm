@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageActions } from "@/components/page-action";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -27,14 +28,14 @@ const money = new Intl.NumberFormat("en-US", {
 export default function QuotesPage() {
   return (
     <>
-      <div className="flex items-start justify-between gap-4">
+      <PageActions>
         <PageHeader
           title="Quotes"
           description="Track proposed work, estimates, and accepted offers."
         />
 
         <Button>Create Quote</Button>
-      </div>
+      </PageActions>
 
       <Card>
         <CardHeader>

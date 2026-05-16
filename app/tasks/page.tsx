@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageActions } from "@/components/page-action";
 
 const statusVariants = {
   Todo: "secondary",
@@ -29,14 +30,14 @@ const statusVariants = {
 export default function TasksPage() {
   return (
     <>
-      <div className="flex items-start justify-between gap-4">
+      <PageActions>
         <PageHeader
           title="Tasks"
           description="Track action items across clients and projects."
         />
 
         <Button>Add Task</Button>
-      </div>
+      </PageActions>
 
       <Card>
         <CardHeader>

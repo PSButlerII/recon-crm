@@ -18,18 +18,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageActions } from "@/components/page-action";
 
 export default function FilesPage() {
   return (
     <>
-      <div className="flex items-start justify-between gap-4">
+      <PageActions>
         <PageHeader
           title="Files"
           description="Documents, references, deliverables, and client/project assets."
         />
 
         <Button>Upload File</Button>
-      </div>
+      </PageActions>
 
       <Card>
         <CardHeader>

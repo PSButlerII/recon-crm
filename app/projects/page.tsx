@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PageActions } from "@/components/page-action";
 
 const statusVariants = {
   Planning: "secondary",
@@ -30,14 +31,14 @@ const statusVariants = {
 export default function ProjectsPage() {
   return (
     <>
-      <div className="flex items-start justify-between gap-4">
+      <PageActions>
         <PageHeader
           title="Projects"
           description="Track active work, deadlines, progress, and priorities."
         />
 
         <Button>Add Project</Button>
-      </div>
+      </PageActions>
 
       <Card>
         <CardHeader>

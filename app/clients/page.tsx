@@ -39,6 +39,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
+import { PageActions } from "@/components/page-action";
+
 const statusVariants = {
   Lead: "secondary",
   Active: "default",
@@ -77,7 +79,7 @@ export default function ClientsPage() {
 
   return (
     <>
-      <div className="flex items-start justify-between gap-4">
+      <PageActions>
         <PageHeader
           title="Clients"
           description="Manage companies, individuals, and organizations you work with."
@@ -148,7 +150,7 @@ export default function ClientsPage() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      </PageActions>
 
       <Card>
         <CardHeader>

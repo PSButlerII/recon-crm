@@ -6,6 +6,9 @@ import {
   CheckSquare,
   CalendarDays,
   Settings,
+  FileText,
+  Receipt,
+  Files
 } from "lucide-react";
 
 const navItems = [
@@ -15,6 +18,9 @@ const navItems = [
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/quotes", label: "Quotes", icon: FileText },
+  { href: "/invoices", label: "Invoices", icon: Receipt },
+  { href: "/files", label: "Files", icon: Files },
 ];
 
 export function AppSidebar() {

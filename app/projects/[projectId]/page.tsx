@@ -14,6 +14,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { mockNotes } from "@/data/mock-notes";
+import { mockActivity } from "@/data/mock-activity";
+import { mockInvoices, mockQuotes } from "@/data/mock-billing";
+import { mockFiles } from "@/data/mock-files";
+
 
 const statusVariants = {
   Planning: "secondary",
@@ -37,6 +41,16 @@ export default async function ProjectDetailPage({
   const projectTasks = mockTasks.filter((task) => task.projectId === projectId);
   const openTasks = projectTasks.filter((task) => task.status !== "Done");
   const projectNotes = mockNotes.filter((note) => note.projectId === projectId);
+  const projectActivity = mockActivity.filter(
+  (activity) => activity.projectId === projectId
+  );
+  const projectQuotes = mockQuotes.filter(
+    (quote) => quote.projectId === projectId
+  );
+  const projectInvoices = mockInvoices.filter(
+    (invoice) => invoice.projectId === projectId
+  );
+  const projectFiles = mockFiles.filter((file) => file.projectId === projectId);
   
   if (!project) {
     notFound();
@@ -127,7 +141,7 @@ export default async function ProjectDetailPage({
 
             <div className="rounded-xl border">
               <div className="border-b p-4">
-                <h3 className="font-semibold">Tasks</h3>
+                <h3 className="font-semibold italic underline">Tasks</h3>
                 <p className="text-sm text-slate-500">
                   Action items attached to this project.
                 </p>
@@ -135,7 +149,7 @@ export default async function ProjectDetailPage({
 
               <div className="rounded-xl border">
                 <div className="border-b p-4">
-                  <h3 className="font-semibold">Notes</h3>
+                  <h3 className="font-semibold italic underline">Notes</h3>
                   <p className="text-sm text-slate-500">
                     Context, decisions, and reminders attached to this project.
                   </p>
@@ -161,6 +175,118 @@ export default async function ProjectDetailPage({
                   ) : (
                     <div className="p-4 text-sm text-slate-500">
                       No notes attached to this project yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-xl border">
+                <div className="border-b p-4">
+                  <h3 className="font-semibold italic underline">Activity Timeline</h3>
+                  <p className="text-sm text-slate-500">
+                    Recent actions and updates related to this project.
+                  </p>
+                </div>
+
+                <div className="divide-y">
+                  {projectActivity.length > 0 ? (
+                    projectActivity.map((activity) => (
+                      <div key={activity.id} className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="font-medium">{activity.message}</p>
+                            <p className="mt-1 text-sm text-slate-500">
+                              {activity.type}
+                            </p>
+                          </div>
+
+                          <div className="text-right text-sm text-slate-500">
+                            {activity.createdAt}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-sm text-slate-500">
+                      No activity recorded yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="rounded-xl border">
+                <div className="border-b p-4">
+                  <h3 className="font-semibold italic underline">Billing</h3>
+                  <p className="text-sm text-slate-500">
+                    Quotes and invoices connected to this client.
+                  </p>
+                </div>
+
+                <div className="grid gap-4 p-4 md:grid-cols-2">
+                  <div>
+                    <h4 className="mb-2 text-sm font-semibold italic underline">Quotes</h4>
+                    {projectQuotes.length > 0 ? (
+                      <div className="space-y-2">
+                        {projectQuotes.map((quote) => (
+                          <div key={quote.id} className="rounded-xl border p-3 text-sm">
+                            <p className="font-medium">{quote.title}</p>
+                            <p className="text-slate-500">
+                              ${quote.amount} · {quote.status}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500">No quotes yet.</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <h4 className="mb-2 text-sm font-semibold italic underline">Invoices</h4>
+                    {projectInvoices.length > 0 ? (
+                      <div className="space-y-2">
+                        {projectInvoices.map((invoice) => (
+                          <div key={invoice.id} className="rounded-xl border p-3 text-sm">
+                            <p className="font-medium">{invoice.title}</p>
+                            <p className="text-slate-500">
+                              ${invoice.amount} · {invoice.status}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-500">No invoices yet.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border">
+                <div className="border-b p-4">
+                  <h3 className="font-semibold italic underline">Files</h3>
+                  <p className="text-sm text-slate-500">
+                    Documents, references, and deliverables attached here.
+                  </p>
+                </div>
+
+                <div className="divide-y">
+                  {projectFiles.length > 0 ? (
+                    projectFiles.map((file) => (
+                      <div key={file.id} className="flex items-start justify-between gap-4 p-4">
+                        <div>
+                          <p className="font-medium">{file.name}</p>
+                          <p className="mt-1 text-sm text-slate-500">{file.type}</p>
+                        </div>
+
+                        <div className="text-right text-sm text-slate-500">
+                          <p>{file.size}</p>
+                          <p>{file.uploadedAt}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-sm text-slate-500">
+                      No files attached yet.
                     </div>
                   )}
                 </div>

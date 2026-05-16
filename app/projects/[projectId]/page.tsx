@@ -17,6 +17,7 @@ import { mockNotes } from "@/data/mock-notes";
 import { mockActivity } from "@/data/mock-activity";
 import { mockInvoices, mockQuotes } from "@/data/mock-billing";
 import { mockFiles } from "@/data/mock-files";
+import { StatCard } from "@/components/stat-card";
 
 
 const statusVariants = {
@@ -128,15 +129,9 @@ export default async function ProjectDetailPage({
                 <p className="mt-2 text-2xl font-bold">{project.progress}%</p>
               </div>
 
-              <div className="rounded-xl border p-4">
-                <p className="text-sm text-slate-500">Open Tasks</p>
-                <p className="mt-2 text-2xl font-bold">{openTasks.length}</p>
-              </div>
 
-              <div className="rounded-xl border p-4">
-                <p className="text-sm text-slate-500">Files</p>
-                <p className="mt-2 text-2xl font-bold">{projectNotes.length}</p>
-              </div>
+            <StatCard label="Files" value={projectFiles.length} />
+             <StatCard label="Open Tasks" value={openTasks.length} />
             </div>
 
             <div className="rounded-xl border">
@@ -146,7 +141,35 @@ export default async function ProjectDetailPage({
                   Action items attached to this project.
                 </p>
               </div>
+              <div className="divide-y">
+                {projectTasks.length > 0 ? (
+                  projectTasks.map((task) => (
+                    <div key={task.id} className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-medium">{task.title}</p>
+                          {task.description && (
+                            <p className="mt-1 text-sm text-slate-500">
+                              {task.description}
+                            </p>
+                          )}
+                        </div>
 
+                        <div className="text-right text-sm">
+                          <p className="font-medium">{task.status}</p>
+                          <p className="text-slate-500">{task.dueDate ?? "No due date"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-sm text-slate-500">
+                    No tasks attached to this project yet.
+                  </div>
+                )}
+              </div>
+            </div>
+            
               <div className="rounded-xl border">
                 <div className="border-b p-4">
                   <h3 className="font-semibold italic underline">Notes</h3>
@@ -290,36 +313,7 @@ export default async function ProjectDetailPage({
                     </div>
                   )}
                 </div>
-              </div>
-
-              <div className="divide-y">
-                {projectTasks.length > 0 ? (
-                  projectTasks.map((task) => (
-                    <div key={task.id} className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-medium">{task.title}</p>
-                          {task.description && (
-                            <p className="mt-1 text-sm text-slate-500">
-                              {task.description}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="text-right text-sm">
-                          <p className="font-medium">{task.status}</p>
-                          <p className="text-slate-500">{task.dueDate ?? "No due date"}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-4 text-sm text-slate-500">
-                    No tasks attached to this project yet.
-                  </div>
-                )}
-              </div>
-            </div>
+              </div>        
           </CardContent>
         </Card>
       </div>

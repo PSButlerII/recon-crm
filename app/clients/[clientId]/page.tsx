@@ -17,6 +17,7 @@ import { mockNotes } from "@/data/mock-notes";
 import { mockActivity } from "@/data/mock-activity";
 import { mockInvoices, mockQuotes } from "@/data/mock-billing";
 import { mockFiles } from "@/data/mock-files";
+import { StatCard } from "@/components/stat-card";
 
 const statusVariants = {
   Lead: "secondary",
@@ -126,10 +127,7 @@ export default async function ClientDetailPage({
                     <p className="mt-2 text-2xl font-bold">0</p>
                 </div>
 
-                <div className="rounded-xl border p-4">
-                    <p className="text-sm text-slate-500">Files</p>
-                    <p className="mt-2 text-2xl font-bold">0</p>
-                </div>
+                <StatCard label="Files" value={clientFiles.length} />
                 </div>
 
                 <div className="rounded-xl border">

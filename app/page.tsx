@@ -12,12 +12,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+
+const leadClients = mockClients.filter((client) => client.status === "Lead");
+const activeClients = mockClients.filter((client) => client.status === "Active");
+
+const activeProjects = mockProjects.filter(
+  (project) => project.status === "Active"
+);
+
+
+
 const openProjects = mockProjects.filter(
   (project) => project.status !== "Completed" && project.status !== "Cancelled"
 );
 
 const openTasks = mockTasks.filter((task) => task.status !== "Done");
-
+const overdueTasks = openTasks.filter((task) => {
+  if (!task.dueDate) return false;
+  return new Date(task.dueDate) < new Date();
+});
 const upcomingTasks = [...openTasks]
   .filter((task) => task.dueDate)
   .sort((a, b) => {
@@ -36,7 +49,7 @@ export default function DashboardPage() {
         description="At-a-glance view of clients, projects, tasks, and upcoming work."
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardDescription>Active Clients</CardDescription>
@@ -45,6 +58,36 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
         </Card>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardHeader>
+              <CardDescription>Leads</CardDescription>
+              <CardTitle className="text-2xl">{leadClients.length}</CardTitle>
+            </CardHeader>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardDescription>Active Projects</CardDescription>
+              <CardTitle className="text-2xl">{activeProjects.length}</CardTitle>
+            </CardHeader>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardDescription>Overdue Tasks</CardDescription>
+              <CardTitle className="text-2xl">{overdueTasks.length}</CardTitle>
+            </CardHeader>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardDescription>Active Clients</CardDescription>
+              <CardTitle className="text-2xl">{activeClients.length}</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader>

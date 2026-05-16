@@ -8,8 +8,10 @@ import {
   Settings,
   FileText,
   Receipt,
-  Files
+  Files,
+  StickyNote
 } from "lucide-react";
+import { Stick } from "next/font/google";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -21,6 +23,7 @@ const navItems = [
   { href: "/quotes", label: "Quotes", icon: FileText },
   { href: "/invoices", label: "Invoices", icon: Receipt },
   { href: "/files", label: "Files", icon: Files },
+  { href: "/notes", label: "Notes", icon: StickyNote }
 ];
 
 export function AppSidebar() {

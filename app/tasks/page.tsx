@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageActions } from "@/components/page-action";
+import { PageActions } from "@/components/page-actions";
 import { Task, TaskStatus } from "@/types/task";
 import { TaskPriority } from "@/types/task";
 import { mockProjects } from "@/data/mock-projects";

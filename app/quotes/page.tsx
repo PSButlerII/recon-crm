@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageActions } from "@/components/page-action";
+import { PageActions } from "@/components/page-actions";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",

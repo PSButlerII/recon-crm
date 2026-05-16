@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageActions } from "@/components/page-action";
+import { PageActions } from "@/components/page-actions";
 
 export default function FilesPage() {
   return (

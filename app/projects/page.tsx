@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageActions } from "@/components/page-action"
+import { PageActions } from "@/components/page-actions"
 // import { Select } from "radix-ui";
 import { SelectContent, SelectItem, SelectTrigger, SelectValue,Select } from "@/components/ui/select";
 import { useState } from "react";

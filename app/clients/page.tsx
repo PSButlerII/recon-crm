@@ -39,7 +39,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import { PageActions } from "@/components/page-action";
+import { PageActions } from "@/components/page-actions";
 
 const statusVariants = {
   Lead: "secondary",

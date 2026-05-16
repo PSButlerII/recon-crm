@@ -21,16 +21,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useCrm } from "@/context/crm-context";
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState<Note[]>(mockNotes);
-  const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const [typeFilter, setTypeFilter] = useState<"All" | NoteType>("All");
 
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [type, setType] = useState<NoteType>("General");
-  const [clientId, setClientId] = useState("");
-  const [projectId, setProjectId] = useState("");
+    const { notes, setNotes } = useCrm();
+    const [open, setOpen] = useState(false);
+
+    const [title, setTitle] = useState("");
+    const [body, setBody] = useState("");
+    const [type, setType] = useState<NoteType>("General");
+    const [clientId, setClientId] = useState("");
+    const [projectId, setProjectId] = useState("");
+    const filteredNotes = notes.filter((note) => {
+  const matchesSearch =
+    note.title.toLowerCase().includes(search.toLowerCase()) ||
+    note.body.toLowerCase().includes(search.toLowerCase()) ||
+    note.type.toLowerCase().includes(search.toLowerCase());
+
+  const matchesType = typeFilter === "All" || note.type === typeFilter;
+
+  return matchesSearch && matchesType;
+});
 
   function handleAddNote() {
     const selectedProject = mockProjects.find((project) => project.id === projectId);
@@ -63,6 +77,33 @@ export default function NotesPage() {
           title="Notes"
           description="Capture calls, decisions, reminders, research, and project context."
         />
+        <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+                placeholder="Search notes..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+            />
+
+            <Select
+                value={typeFilter}
+                onValueChange={(value) => setTypeFilter(value as "All" | NoteType)}
+            >
+                <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Type" />
+                </SelectTrigger>
+
+                <SelectContent>
+                <SelectItem value="All">All</SelectItem>
+                <SelectItem value="General">General</SelectItem>
+                <SelectItem value="Call">Call</SelectItem>
+                <SelectItem value="Decision">Decision</SelectItem>
+                <SelectItem value="Reminder">Reminder</SelectItem>
+                <SelectItem value="Research">Research</SelectItem>
+                </SelectContent>
+            </Select>
+
+            {/* Keep your Add Note dialog here */}
+            </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -152,8 +193,8 @@ export default function NotesPage() {
 
         <CardContent>
           <div className="divide-y rounded-xl border">
-            {notes.length > 0 ? (
-              notes.map((note) => (
+            {filteredNotes.length > 0 ? (
+              filteredNotes.map((note) => (
                 <WorkspaceItem
                   key={note.id}
                   title={note.title}

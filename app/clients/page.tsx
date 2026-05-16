@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/page-header";
-import { mockClients } from "@/data/mock-clients";
 import type { Client, ClientStatus } from "@/types/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,7 @@ import {
 } from "@/components/ui/table";
 import Link from "next/link";
 import { PageActions } from "@/components/page-actions";
+import { useCrm } from "@/context/crm-context";
 
 const statusVariants = {
   Lead: "secondary",
@@ -49,7 +49,7 @@ const statusVariants = {
 } as const;
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const { clients, setClients } = useCrm();
   const [open, setOpen] = useState(false);
 
   const [name, setName] = useState("");

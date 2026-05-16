@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { mockServiceRequests } from "@/data/mock-service-requests";
 
 
 const leadClients = mockClients.filter((client) => client.status === "Lead");
@@ -20,7 +21,11 @@ const activeProjects = mockProjects.filter(
   (project) => project.status === "Active"
 );
 
-
+const openRequests = mockServiceRequests.filter(
+  (request) =>
+    request.status !== "Declined" &&
+    request.status !== "Converted"
+);
 
 const openProjects = mockProjects.filter(
   (project) => project.status !== "Completed" && project.status !== "Cancelled"
@@ -56,6 +61,13 @@ export default function DashboardPage() {
             <CardTitle className="text-3xl">
               {mockClients.filter((client) => client.status === "Active").length}
             </CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardDescription>Open Requests</CardDescription>
+            <CardTitle className="text-2xl">{openRequests.length}</CardTitle>
           </CardHeader>
         </Card>
 
@@ -130,6 +142,26 @@ export default function DashboardPage() {
                   <Badge variant="outline">{task.priority}</Badge>
                   <p className="mt-2 text-sm text-slate-500">{task.dueDate}</p>
                 </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Open Service Requests</CardTitle>
+            <CardDescription>
+              Potential work that has not become a project yet.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-3">
+            {openRequests.map((request) => (
+              <div key={request.id} className="rounded-xl border p-4">
+                <p className="font-medium">{request.title}</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {request.category} · {request.status}
+                </p>
               </div>
             ))}
           </CardContent>

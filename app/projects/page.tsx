@@ -42,6 +42,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCrm } from "@/context/crm-context";
 const statusVariants = {
   Planning: "secondary",
   Active: "default",
@@ -52,7 +53,7 @@ const statusVariants = {
 
 
 export default function ProjectsPage() {
-const [projects, setProjects] = useState<Project[]>(mockProjects);
+const { projects, setProjects, clients } = useCrm();
 const [successMessage, setSuccessMessage] = useState("");
 const [open, setOpen] = useState(false);
 
@@ -153,137 +154,137 @@ function handleAddProject() {
         </Select>
 
         <Dialog open={open} onOpenChange={setOpen}>
-  <DialogTrigger asChild>
-    <Button>Add Project</Button>
-  </DialogTrigger>
+          <DialogTrigger asChild>
+            <Button>Add Project</Button>
+          </DialogTrigger>
 
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Create Project</DialogTitle>
-      <DialogDescription>
-        Create a new project linked to a client.
-      </DialogDescription>
-    </DialogHeader>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Project</DialogTitle>
+              <DialogDescription>
+                Create a new project linked to a client.
+              </DialogDescription>
+            </DialogHeader>
 
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Project Name</Label>
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Project Name</Label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
 
-      <div className="space-y-2">
-        <Label>Client</Label>
+              <div className="space-y-2">
+                <Label>Client</Label>
 
-        <Select
-          value={clientId}
-          onValueChange={(value) => setClientId(value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select client" />
-          </SelectTrigger>
+                <Select
+                  value={clientId}
+                  onValueChange={(value) => setClientId(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select client" />
+                  </SelectTrigger>
 
-          <SelectContent>
-            {mockClients.map((client) => (
-              <SelectItem key={client.id} value={client.id}>
-                {client.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+                  <SelectContent>
+                    {mockClients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-      <div className="space-y-2">
-        <Label>Description</Label>
+              <div className="space-y-2">
+                <Label>Description</Label>
 
-        <Input
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
+                <Input
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>Status</Label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Status</Label>
 
-          <Select
-            value={status}
-            onValueChange={(value) =>
-              setStatus(value as ProjectStatus)
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+                  <Select
+                    value={status}
+                    onValueChange={(value) =>
+                      setStatus(value as ProjectStatus)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
 
-            <SelectContent>
-              <SelectItem value="Planning">Planning</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="On Hold">On Hold</SelectItem>
-              <SelectItem value="Completed">Completed</SelectItem>
-              <SelectItem value="Cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+                    <SelectContent>
+                      <SelectItem value="Planning">Planning</SelectItem>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="On Hold">On Hold</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-        <div className="space-y-2">
-          <Label>Priority</Label>
+                <div className="space-y-2">
+                  <Label>Priority</Label>
 
-          <Select
-            value={priority}
-            onValueChange={(value) =>
-              setPriority(value as ProjectPriority)
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+                  <Select
+                    value={priority}
+                    onValueChange={(value) =>
+                      setPriority(value as ProjectPriority)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
 
-            <SelectContent>
-              <SelectItem value="Low">Low</SelectItem>
-              <SelectItem value="Medium">Medium</SelectItem>
-              <SelectItem value="High">High</SelectItem>
-              <SelectItem value="Urgent">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>Start Date</Label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
 
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
 
-        <div className="space-y-2">
-          <Label>Due Date</Label>
+                <div className="space-y-2">
+                  <Label>Due Date</Label>
 
-          <Input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </div>
-      </div>
+                  <Input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </div>
+              </div>
 
-      <Button
-        className="w-full"
-        onClick={handleAddProject}
-        disabled={!name || !clientId}
-      >
-        Save Project
-      </Button>
-    </div>
-    
-  </DialogContent>
-</Dialog>
+              <Button
+                className="w-full"
+                onClick={handleAddProject}
+                disabled={!name || !clientId}
+              >
+                Save Project
+              </Button>
+            </div>
+            
+            </DialogContent>
+          </Dialog>
         </div>
         
       </PageActions>

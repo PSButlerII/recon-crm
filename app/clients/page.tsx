@@ -56,6 +56,20 @@ export default function ClientsPage() {
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<ClientStatus>("Lead");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"All" | ClientStatus>("All");
+
+  const filteredClients = clients.filter((client) => {
+  const matchesSearch =
+    client.name.toLowerCase().includes(search.toLowerCase()) ||
+    client.contactName.toLowerCase().includes(search.toLowerCase()) ||
+    client.email.toLowerCase().includes(search.toLowerCase());
+
+  const matchesStatus =
+    statusFilter === "All" || client.status === statusFilter;
+
+  return matchesSearch && matchesStatus;
+});
 
   function handleAddClient() {
     const newClient: Client = {
@@ -84,7 +98,31 @@ export default function ClientsPage() {
           title="Clients"
           description="Manage companies, individuals, and organizations you work with."
         />
+        <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              placeholder="Search clients..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
 
+            <Select
+              value={statusFilter}
+              onValueChange={(value) =>
+                setStatusFilter(value as "All" | ClientStatus)
+              }
+            >
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="All">All</SelectItem>
+                <SelectItem value="Lead">Lead</SelectItem>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Paused">Paused</SelectItem>
+                <SelectItem value="Archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>Add Client</Button>
@@ -150,6 +188,7 @@ export default function ClientsPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </PageActions>
 
       <Card>
@@ -174,7 +213,7 @@ export default function ClientsPage() {
             </TableHeader>
 
             <TableBody>
-              {clients.map((client) => (
+              {filteredClients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">
                     <Link href={`/clients/${client.id}`} className="hover:underline">

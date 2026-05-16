@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { mockProjects } from "@/data/mock-projects";
@@ -18,8 +20,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageActions } from "@/components/page-action";
+import { PageActions } from "@/components/page-action"
+// import { Select } from "radix-ui";
+import { SelectContent, SelectItem, SelectTrigger, SelectValue,Select } from "@/components/ui/select";
+import { useState } from "react";
+import type {
+  Project,
+  ProjectPriority,
+  ProjectStatus,
+} from "@/types/project";
+import { mockClients } from "@/data/mock-clients";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 const statusVariants = {
   Planning: "secondary",
   Active: "default",
@@ -28,7 +50,74 @@ const statusVariants = {
   Cancelled: "destructive",
 } as const;
 
+
 export default function ProjectsPage() {
+const [projects, setProjects] = useState<Project[]>(mockProjects);
+const [successMessage, setSuccessMessage] = useState("");
+const [open, setOpen] = useState(false);
+
+const [name, setName] = useState("");
+const [clientId, setClientId] = useState("");
+const [description, setDescription] = useState("");
+const [status, setStatus] =
+  useState<ProjectStatus>("Planning");
+
+const [priority, setPriority] =
+  useState<ProjectPriority>("Medium");
+
+const [startDate, setStartDate] = useState("");
+const [dueDate, setDueDate] = useState("");
+const [search, setSearch] = useState("");
+const [statusFilter, setStatusFilter] = useState<"All" | ProjectStatus>("All");
+
+const filteredProjects = projects.filter((project) => {
+const matchesSearch =
+    project.name.toLowerCase().includes(search.toLowerCase()) ||
+    project.clientName.toLowerCase().includes(search.toLowerCase()) ||
+    project.dueDate?.toLowerCase().includes(search.toLowerCase())||
+    project.priority.toLowerCase().includes(search.toLowerCase())||
+    project.status.toLowerCase().includes(search.toLowerCase())||
+    project.progress.toString().includes(search.toLowerCase());
+
+  const matchesStatus =
+    statusFilter === "All" || project.status === statusFilter;
+
+  return matchesSearch && matchesStatus;
+
+});
+
+function handleAddProject() {
+  const client = mockClients.find(
+    (client) => client.id === clientId
+  );
+
+  if (!client) return;
+
+  const newProject: Project = {
+    id: crypto.randomUUID(),
+    clientId,
+    clientName: client.name,
+    name,
+    description,
+    status,
+    priority,
+    progress: 0,
+    startDate,
+    dueDate,
+  };
+
+  setProjects((current) => [newProject, ...current]);
+
+  setName("");
+  setClientId("");
+  setDescription("");
+  setStatus("Planning");
+  setPriority("Medium");
+  setStartDate("");
+  setDueDate("");
+  setSuccessMessage(`Project "${name}" was added.`);
+  setOpen(false);
+}
   return (
     <>
       <PageActions>
@@ -37,8 +126,172 @@ export default function ProjectsPage() {
           description="Track active work, deadlines, progress, and priorities."
         />
 
-        <Button>Add Project</Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+          placeholder="Search projects..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <Select
+          value={statusFilter}
+          onValueChange={(value)  => 
+            setStatusFilter(value as "All" | ProjectStatus)
+          }
+            >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+
+          <SelectContent>
+            <SelectItem value="All">All</SelectItem>
+            <SelectItem value="Planning">Planning</SelectItem>
+            <SelectItem value="Active">Active</SelectItem>
+            <SelectItem value="On Hold">On Hold</SelectItem>
+            <SelectItem value="Completed">Completed</SelectItem>
+            <SelectItem value="Cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Dialog open={open} onOpenChange={setOpen}>
+  <DialogTrigger asChild>
+    <Button>Add Project</Button>
+  </DialogTrigger>
+
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Create Project</DialogTitle>
+      <DialogDescription>
+        Create a new project linked to a client.
+      </DialogDescription>
+    </DialogHeader>
+
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Project Name</Label>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Client</Label>
+
+        <Select
+          value={clientId}
+          onValueChange={(value) => setClientId(value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select client" />
+          </SelectTrigger>
+
+          <SelectContent>
+            {mockClients.map((client) => (
+              <SelectItem key={client.id} value={client.id}>
+                {client.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Description</Label>
+
+        <Input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Status</Label>
+
+          <Select
+            value={status}
+            onValueChange={(value) =>
+              setStatus(value as ProjectStatus)
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="Planning">Planning</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="On Hold">On Hold</SelectItem>
+              <SelectItem value="Completed">Completed</SelectItem>
+              <SelectItem value="Cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Priority</Label>
+
+          <Select
+            value={priority}
+            onValueChange={(value) =>
+              setPriority(value as ProjectPriority)
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="Low">Low</SelectItem>
+              <SelectItem value="Medium">Medium</SelectItem>
+              <SelectItem value="High">High</SelectItem>
+              <SelectItem value="Urgent">Urgent</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Start Date</Label>
+
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Due Date</Label>
+
+          <Input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <Button
+        className="w-full"
+        onClick={handleAddProject}
+        disabled={!name || !clientId}
+      >
+        Save Project
+      </Button>
+    </div>
+    
+  </DialogContent>
+</Dialog>
+        </div>
+        
       </PageActions>
+      {successMessage && (
+  <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+    {successMessage}
+  </div>
+)}
 
       <Card>
         <CardHeader>
@@ -62,7 +315,7 @@ export default function ProjectsPage() {
             </TableHeader>
 
             <TableBody>
-              {mockProjects.map((project) => (
+              {filteredProjects.map((project) => (
                 <TableRow key={project.id}>
                   <TableCell className="font-medium">
                     <Link href={`/projects/${project.id}`} className="hover:underline">

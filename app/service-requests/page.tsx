@@ -96,6 +96,7 @@ export default function ServiceRequestsPage() {
     progress: 0,
     startDate: new Date().toISOString().split("T")[0],
     dueDate,
+    serviceRequestId: request.id,
   };
 
   setProjects((current) => [newProject, ...current]);
@@ -145,7 +146,7 @@ export default function ServiceRequestsPage() {
           description="Track incoming work before it becomes a project."
         />
 
-        <TableHead>Action</TableHead>
+        
 
         <Select
           value={statusFilter}
@@ -288,13 +289,21 @@ export default function ServiceRequestsPage() {
                 <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Requested</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {filteredRequests.map((request) => (
                 <TableRow key={request.id}>
-                  <TableCell className="font-medium">{request.title}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link
+                      href={`/service-requests/${request.id}`}
+                      className="hover:underline"
+                    >
+                      {request.title}
+                    </Link>
+                  </TableCell>
 
                   <TableCell>
                     {request.clientId ? (

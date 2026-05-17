@@ -30,7 +30,12 @@ const statusVariants = {
 
 export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
   const { submissionId } = use(params);
-  const { intakeSubmissions } = useCrm();
+
+  const {
+    intakeSubmissions,
+    setIntakeSubmissions,
+    setServiceRequests,
+  } = useCrm();
 
   const submission = intakeSubmissions.find(
     (item) => item.id === submissionId
@@ -40,6 +45,46 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
     return <div>Submission not found.</div>;
   }
 
+  function handleConvertToRequest() {
+  const currentSubmission = intakeSubmissions.find(
+    (item) => item.id === submissionId
+  );
+
+  if (!currentSubmission) return;
+
+  setServiceRequests((current) => [
+    {
+      id: crypto.randomUUID(),
+      intakeSubmissionId: currentSubmission.id,
+      clientName: currentSubmission.company || currentSubmission.name,
+      title: `${currentSubmission.projectType || "General Inquiry"} Request`,
+      description:
+        currentSubmission.message ||
+        currentSubmission.goal ||
+        "No description provided.",
+      category: currentSubmission.projectType || "General",
+      status: "New",
+      requestedAt: currentSubmission.submittedAt,
+    },
+    ...current,
+  ]);
+
+  setIntakeSubmissions((current) =>
+    current.map((item) =>
+      item.id === currentSubmission.id
+        ? { ...item, status: "Converted" }
+        : item
+    )
+  );
+}
+
+  function updateSubmissionStatus(status: "Reviewed" | "Ignored") {
+  setIntakeSubmissions((current) =>
+    current.map((item) =>
+      item.id === submissionId ? { ...item, status } : item
+    )
+  );
+}
   return (
     <>
       <div className="mb-6">
@@ -57,9 +102,38 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
           description="Review inbound inquiry details before converting."
         />
 
-        <Badge variant={statusVariants[submission.status]}>
-          {submission.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={statusVariants[submission.status]}>
+            {submission.status}
+          </Badge>
+
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={submission.status === "Converted"}
+            onClick={() => updateSubmissionStatus("Reviewed")}
+          >
+            Mark Reviewed
+          </Button>
+
+          <Button
+            size="sm"
+            variant="destructive"
+            disabled={submission.status === "Converted"}
+            onClick={() => updateSubmissionStatus("Ignored")}
+          >
+            Ignore
+          </Button>
+
+          <Button
+            size="sm"
+            disabled={submission.status === "Converted"}
+            onClick={handleConvertToRequest}
+          >
+            {submission.status === "Converted" ? "Converted" : "Convert"}
+          </Button>
+        </div>
+
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

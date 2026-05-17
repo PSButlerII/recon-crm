@@ -18,4 +18,5 @@ export type Project = {
   progress: number;
   startDate?: string;
   dueDate?: string;
+  serviceRequestId?: string;
 };

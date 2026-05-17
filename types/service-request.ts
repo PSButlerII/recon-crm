@@ -10,6 +10,8 @@ export type ServiceRequest = {
   id: string;
   clientId?: string;
   clientName?: string;
+  intakeSubmissionId?: string;
+
   title: string;
   description: string;
   category: string;

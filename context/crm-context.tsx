@@ -18,6 +18,8 @@ import type { Project } from "@/types/project";
 import type { Task } from "@/types/task";
 import type { Note } from "@/types/note";
 import type { ServiceRequest } from "@/types/service-request";
+import { mockIntakeSubmissions } from "@/data/mock-intake-submissions";
+import type { IntakeSubmission } from "@/types/intake-submission";
 
 type CrmContextType = {
   clients: Client[];
@@ -34,6 +36,10 @@ type CrmContextType = {
 
   serviceRequests: ServiceRequest[];
   setServiceRequests: React.Dispatch<React.SetStateAction<ServiceRequest[]>>;
+
+  intakeSubmissions: IntakeSubmission[];
+  setIntakeSubmissions: React.Dispatch<React.SetStateAction<IntakeSubmission[]>
+>;
 };
 
 const CrmContext = createContext<CrmContextType | undefined>(undefined);
@@ -43,9 +49,9 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>(mockProjects);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [notes, setNotes] = useState<Note[]>(mockNotes);
-  const [serviceRequests, setServiceRequests] =
-    useState<ServiceRequest[]>(mockServiceRequests);
-
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>(mockServiceRequests);
+  const [intakeSubmissions, setIntakeSubmissions] = useState<IntakeSubmission[]>(mockIntakeSubmissions);
+  
   return (
     <CrmContext.Provider
       value={{
@@ -59,6 +65,8 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         setNotes,
         serviceRequests,
         setServiceRequests,
+        intakeSubmissions,
+        setIntakeSubmissions,
       }}
     >
       {children}

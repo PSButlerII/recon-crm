@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -21,6 +22,8 @@ import { StatCard } from "@/components/stat-card";
 import { WorkspaceSection } from "@/components/workspace-section";
 import { EmptyState } from "@/components/empty-state";
 import { WorkspaceItem } from "@/components/workspace-item";
+import { use } from "react";
+import { useCrm } from "@/context/crm-context";
 
 const statusVariants = {
   Planning: "secondary",
@@ -30,23 +33,24 @@ const statusVariants = {
   Cancelled: "destructive",
 } as const;
 
+
 type ProjectDetailPageProps = {
   params: Promise<{
     projectId: string;
   }>;
 };
 
-export default async function ProjectDetailPage({
-  params,
-}: ProjectDetailPageProps) {
-  const { projectId } = await params;
+export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+  const { projectId } = use(params);
+
+  const { serviceRequests } = useCrm();
   const project = mockProjects.find((item) => item.id === projectId);
   const projectTasks = mockTasks.filter((task) => task.projectId === projectId);
   const openTasks = projectTasks.filter((task) => task.status !== "Done");
   const projectNotes = mockNotes.filter((note) => note.projectId === projectId);
   const projectActivity = mockActivity.filter(
   (activity) => activity.projectId === projectId
-  );
+);
   const projectQuotes = mockQuotes.filter(
     (quote) => quote.projectId === projectId
   );
@@ -54,10 +58,16 @@ export default async function ProjectDetailPage({
     (invoice) => invoice.projectId === projectId
   );
   const projectFiles = mockFiles.filter((file) => file.projectId === projectId);
+
+  
+
   
   if (!project) {
     notFound();
   }
+  const relatedRequest = serviceRequests.find(
+    (request) => request.id === project.serviceRequestId
+  );
 
   return (
     <>
@@ -266,6 +276,17 @@ export default async function ProjectDetailPage({
 
           </CardContent>
         </Card>
+        {relatedRequest && (
+          <div>
+            <p className="text-slate-500">Source Request</p>
+            <Link
+              href={`/service-requests/${relatedRequest.id}`}
+              className="font-medium hover:underline"
+            >
+              {relatedRequest.title}
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );

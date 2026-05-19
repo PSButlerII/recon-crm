@@ -7,13 +7,7 @@ import { PageActions } from "@/components/page-actions";
 import { PageHeader } from "@/components/page-header";
 import { WorkspaceItem } from "@/components/workspace-item";
 import { EmptyState } from "@/components/empty-state";
-
-import { mockNotes } from "@/data/mock-notes";
-import { mockClients } from "@/data/mock-clients";
-import { mockProjects } from "@/data/mock-projects";
-
 import type { Note, NoteType } from "@/types/note";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -27,7 +21,7 @@ export default function NotesPage() {
     const [search, setSearch] = useState("");
     const [typeFilter, setTypeFilter] = useState<"All" | NoteType>("All");
 
-    const { notes, setNotes } = useCrm();
+    const { notes, setNotes,clients,projects } = useCrm();
     const [open, setOpen] = useState(false);
 
     const [title, setTitle] = useState("");
@@ -36,7 +30,7 @@ export default function NotesPage() {
     const [clientId, setClientId] = useState("");
     const [projectId, setProjectId] = useState("");
     const filteredNotes = notes.filter((note) => {
-  const matchesSearch =
+    const matchesSearch =
     note.title.toLowerCase().includes(search.toLowerCase()) ||
     note.body.toLowerCase().includes(search.toLowerCase()) ||
     note.type.toLowerCase().includes(search.toLowerCase());
@@ -47,8 +41,8 @@ export default function NotesPage() {
 });
 
   function handleAddNote() {
-    const selectedProject = mockProjects.find((project) => project.id === projectId);
-    const selectedClient = mockClients.find((client) => client.id === clientId);
+    const selectedProject = projects.find((project) => project.id === projectId);
+    const selectedClient = clients.find((client) => client.id === clientId);
 
     const newNote: Note = {
       id: crypto.randomUUID(),
@@ -152,7 +146,7 @@ export default function NotesPage() {
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockClients.map((client) => (
+                    {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}
                       </SelectItem>
@@ -168,7 +162,7 @@ export default function NotesPage() {
                     <SelectValue placeholder="Optional project" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockProjects.map((project) => (
+                    {projects.map((project) => (
                       <SelectItem key={project.id} value={project.id}>
                         {project.name}
                       </SelectItem>

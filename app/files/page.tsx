@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { mockFiles } from "@/data/mock-files";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +18,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageActions } from "@/components/page-actions";
+import { useCrm } from "@/context/crm-context";
 
 export default function FilesPage() {
+  const { files } = useCrm();
   return (
     <>
       <PageActions>
@@ -54,7 +55,7 @@ export default function FilesPage() {
             </TableHeader>
 
             <TableBody>
-              {mockFiles.map((file) => (
+              {files.map((file) => (
                 <TableRow key={file.id}>
                   <TableCell className="font-medium">{file.name}</TableCell>
 

@@ -21,7 +21,10 @@ type ServiceRequestDetailPageProps = {
   }>;
 };
 
- const statusVariants = {
+
+
+export default function ServiceRequestDetailPage({ params }: ServiceRequestDetailPageProps) {
+   const statusVariants = {
     New: "secondary",
     Reviewing: "default",
     Quoted: "outline",
@@ -29,8 +32,7 @@ type ServiceRequestDetailPageProps = {
     Declined: "destructive",
     Converted: "outline",
   } as const;
-
-export default function ServiceRequestDetailPage({ params }: ServiceRequestDetailPageProps) {
+  
   const { requestId } = use(params);
 
 const {
@@ -38,6 +40,7 @@ const {
   setServiceRequests,
   projects,
   setProjects,
+  setActivity,
 } = useCrm();
 
 const request = serviceRequests.find(
@@ -59,22 +62,21 @@ function handleConvertToProject() {
 
   if (!currentRequest) return;
 
-  setProjects((current) => [
-    {
-      id: crypto.randomUUID(),
-      clientId: currentRequest.clientId ?? "",
-      clientName: currentRequest.clientName ?? "Unassigned",
-      name: currentRequest.title,
-      description: currentRequest.description,
-      status: "Planning",
-      priority: "Medium",
-      progress: 0,
-      startDate: new Date().toISOString().split("T")[0],
-      dueDate: "",
-      serviceRequestId: currentRequest.id,
-    },
-    ...current,
-  ]);
+  const newProject = {
+    id: crypto.randomUUID(),
+    clientId: currentRequest.clientId ?? "",
+    clientName: currentRequest.clientName ?? "Unassigned",
+    serviceRequestId: currentRequest.id,
+    name: currentRequest.title,
+    description: currentRequest.description,
+    status: "Planning" as const,
+    priority: "Medium" as const,
+    progress: 0,
+    startDate: new Date().toISOString().split("T")[0],
+    dueDate: "",
+  };
+
+  setProjects((current) => [newProject, ...current]);
 
   setServiceRequests((current) =>
     current.map((item) =>
@@ -83,6 +85,18 @@ function handleConvertToProject() {
         : item
     )
   );
+
+  setActivity((current) => [
+    {
+      id: crypto.randomUUID(),
+      clientId: newProject.clientId,
+      projectId: newProject.id,
+      type: "Project",
+      message: `Created project "${newProject.name}" from service request.`,
+      createdAt: new Date().toLocaleString(),
+    },
+    ...current,
+  ]);
 }
 
   return (

@@ -41,14 +41,15 @@ import Link from "next/link";
 import { PageActions } from "@/components/page-actions";
 import { useCrm } from "@/context/crm-context";
 
-const statusVariants = {
+
+
+export default function ClientsPage() {
+  const statusVariants = {
   Lead: "secondary",
   Active: "default",
   Paused: "outline",
   Archived: "destructive",
 } as const;
-
-export default function ClientsPage() {
   const { clients, setClients } = useCrm();
   const [open, setOpen] = useState(false);
 

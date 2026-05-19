@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { mockProjects } from "@/data/mock-projects";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageActions } from "@/components/page-actions"
-// import { Select } from "radix-ui";
 import { SelectContent, SelectItem, SelectTrigger, SelectValue,Select } from "@/components/ui/select";
 import { useState } from "react";
 import type {
@@ -29,8 +27,6 @@ import type {
   ProjectPriority,
   ProjectStatus,
 } from "@/types/project";
-import { mockClients } from "@/data/mock-clients";
-
 import {
   Dialog,
   DialogContent,
@@ -39,10 +35,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCrm } from "@/context/crm-context";
+
 const statusVariants = {
   Planning: "secondary",
   Active: "default",
@@ -88,7 +84,7 @@ const matchesSearch =
 });
 
 function handleAddProject() {
-  const client = mockClients.find(
+  const client = clients.find(
     (client) => client.id === clientId
   );
 
@@ -187,7 +183,7 @@ function handleAddProject() {
                   </SelectTrigger>
 
                   <SelectContent>
-                    {mockClients.map((client) => (
+                    {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}
                       </SelectItem>

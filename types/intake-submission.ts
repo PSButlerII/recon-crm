@@ -4,19 +4,26 @@ export type IntakeSubmissionStatus =
   | "Converted"
   | "Ignored";
 
+export type IntakePriority = "low" | "normal" | "high" | "urgent";
+
 export type IntakeSubmission = {
   id: string;
+  inquiryId: string;
+
   source: string;
   name: string;
   email: string;
   company?: string;
-  projectType?: string;
-  goal?: string;
+
+  projectType: string;
+  goal: string;
   blocker?: string;
   budget?: string;
   timeline?: string;
   preferredContact?: string;
   message?: string;
+
   submittedAt: string;
   status: IntakeSubmissionStatus;
+  priority: IntakePriority;
 };

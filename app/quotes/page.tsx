@@ -20,12 +20,13 @@ import {
 } from "@/components/ui/table";
 import { PageActions } from "@/components/page-actions";
 
-const money = new Intl.NumberFormat("en-US", {
+
+export default function QuotesPage() {
+  const money = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
 });
 
-export default function QuotesPage() {
   return (
     <>
       <PageActions>

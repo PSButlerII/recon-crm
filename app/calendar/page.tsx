@@ -1,7 +1,7 @@
+"use client"
+
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { mockProjects } from "@/data/mock-projects";
-import { mockTasks } from "@/data/mock-tasks";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -10,33 +10,36 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-const calendarItems = [
-  ...mockProjects
-    .filter((project) => project.dueDate)
-    .map((project) => ({
-      id: project.id,
-      type: "Project Due",
-      title: project.name,
-      date: project.dueDate!,
-      href: `/projects/${project.id}`,
-      subtitle: project.clientName,
-      priority: project.priority,
-    })),
-  ...mockTasks
-    .filter((task) => task.dueDate)
-    .map((task) => ({
-      id: task.id,
-      type: "Task Due",
-      title: task.title,
-      date: task.dueDate!,
-      href: `/projects/${task.projectId}`,
-      subtitle: `${task.projectName} · ${task.clientName}`,
-      priority: task.priority,
-    })),
-].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+import { useCrm } from "@/context/crm-context";
 
 export default function CalendarPage() {
+  const { projects, tasks } = useCrm();
+
+  const calendarItems = [
+    ...projects
+      .filter((project) => project.dueDate)
+      .map((project) => ({
+        id: project.id,
+        type: "Project Due",
+        title: project.name,
+        date: project.dueDate!,
+        href: `/projects/${project.id}`,
+        subtitle: project.clientName,
+        priority: project.priority,
+      })),
+    ...tasks
+      .filter((task) => task.dueDate)
+      .map((task) => ({
+        id: task.id,
+        type: "Task Due",
+        title: task.title,
+        date: task.dueDate!,
+        href: `/projects/${task.projectId}`,
+        subtitle: `${task.projectName} · ${task.clientName}`,
+        priority: task.priority,
+      })),
+  ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
   return (
     <>
       <PageHeader

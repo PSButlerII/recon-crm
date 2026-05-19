@@ -20,6 +20,13 @@ import type { Note } from "@/types/note";
 import type { ServiceRequest } from "@/types/service-request";
 import { mockIntakeSubmissions } from "@/data/mock-intake-submissions";
 import type { IntakeSubmission } from "@/types/intake-submission";
+import { mockFiles } from "@/data/mock-files";
+import { mockActivity } from "@/data/mock-activity";
+import { mockQuotes, mockInvoices } from "@/data/mock-billing";
+
+import type { FileRecord } from "@/types/file-record";
+import type { Activity } from "@/types/activity";
+import type { Quote, Invoice } from "@/types/billing";
 
 type CrmContextType = {
   clients: Client[];
@@ -40,6 +47,17 @@ type CrmContextType = {
   intakeSubmissions: IntakeSubmission[];
   setIntakeSubmissions: React.Dispatch<React.SetStateAction<IntakeSubmission[]>
 >;
+  files: FileRecord[];
+  setFiles: React.Dispatch<React.SetStateAction<FileRecord[]>>;
+
+  activity: Activity[];
+  setActivity: React.Dispatch<React.SetStateAction<Activity[]>>;
+
+  quotes: Quote[];
+  setQuotes: React.Dispatch<React.SetStateAction<Quote[]>>;
+
+  invoices: Invoice[];
+  setInvoices: React.Dispatch<React.SetStateAction<Invoice[]>>;
 };
 
 const CrmContext = createContext<CrmContextType | undefined>(undefined);
@@ -51,7 +69,11 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   const [notes, setNotes] = useState<Note[]>(mockNotes);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>(mockServiceRequests);
   const [intakeSubmissions, setIntakeSubmissions] = useState<IntakeSubmission[]>(mockIntakeSubmissions);
-  
+  const [files, setFiles] = useState<FileRecord[]>(mockFiles);
+  const [activity, setActivity] = useState<Activity[]>(mockActivity);
+  const [quotes, setQuotes] = useState<Quote[]>(mockQuotes);
+  const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices);
+
   return (
     <CrmContext.Provider
       value={{
@@ -67,6 +89,14 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         setServiceRequests,
         intakeSubmissions,
         setIntakeSubmissions,
+        files,
+        setFiles,
+        activity,
+        setActivity,
+        quotes,
+        setQuotes,
+        invoices,
+        setInvoices,
       }}
     >
       {children}

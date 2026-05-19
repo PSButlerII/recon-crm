@@ -25,15 +25,6 @@ import { WorkspaceItem } from "@/components/workspace-item";
 import { use } from "react";
 import { useCrm } from "@/context/crm-context";
 
-const statusVariants = {
-  Planning: "secondary",
-  Active: "default",
-  "On Hold": "outline",
-  Completed: "default",
-  Cancelled: "destructive",
-} as const;
-
-
 type ProjectDetailPageProps = {
   params: Promise<{
     projectId: string;
@@ -41,6 +32,14 @@ type ProjectDetailPageProps = {
 };
 
 export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+  const statusVariants = {
+  Planning: "secondary",
+  Active: "default",
+  "On Hold": "outline",
+  Completed: "default",
+  Cancelled: "destructive",
+} as const;
+
   const { projectId } = use(params);
 
   const { serviceRequests } = useCrm();

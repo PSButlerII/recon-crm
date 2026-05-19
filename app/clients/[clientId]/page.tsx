@@ -1,26 +1,17 @@
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { use } from "react";
 import { ArrowLeft } from "lucide-react";
-import { mockClients } from "@/data/mock-clients";
+import { useCrm } from "@/context/crm-context";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { mockProjects } from "@/data/mock-projects";
-import { mockNotes } from "@/data/mock-notes";
-import { mockActivity } from "@/data/mock-activity";
-import { mockInvoices, mockQuotes } from "@/data/mock-billing";
-import { mockFiles } from "@/data/mock-files";
-import { StatCard } from "@/components/stat-card";
-import { WorkspaceSection } from "@/components/workspace-section";
-import { EmptyState } from "@/components/empty-state";
-import { WorkspaceItem } from "@/components/workspace-item";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, } from "@/components/ui/card";
+import { StatCard } from "@/components/stat-card"; 
+import { WorkspaceSection } from "@/components/workspace-section"; 
+import { EmptyState } from "@/components/empty-state"; 
+import { WorkspaceItem } from "@/components/workspace-item"
 
 const statusVariants = {
   Lead: "secondary",
@@ -35,27 +26,52 @@ type ClientDetailPageProps = {
   }>;
 };
 
-export default async function ClientDetailPage({
-  params,
-}: ClientDetailPageProps) {
-  const { clientId } = await params;
-  const clientNotes = mockNotes.filter((note) => note.clientId === clientId);
-  const client = mockClients.find((item) => item.id === clientId);
-  const clientActivity = mockActivity.filter(
-    (activity) => activity.clientId === clientId
-  );
-  const clientProjects = mockProjects.filter(
-  (project) => project.clientId === clientId
-  );
-  const clientQuotes = mockQuotes.filter((quote) => quote.clientId === clientId);
-  const clientInvoices = mockInvoices.filter(
-    (invoice) => invoice.clientId === clientId
-  );
-  const clientFiles = mockFiles.filter((file) => file.clientId === clientId);
+export default function ClientDetailPage({ params }: ClientDetailPageProps) {
+  const { clientId } = use(params);
+
+  const {
+  clients,
+  projects,
+  tasks,
+  notes,
+  serviceRequests,
+  files,
+  activity,
+  quotes,
+  invoices,
+} = useCrm();
+
+  const client = clients.find((item) => item.id === clientId);
 
   if (!client) {
-    notFound();
+    return <div>Client not found.</div>;
   }
+
+  const clientProjects = projects.filter(
+    (project) => project.clientId === clientId
+  );
+
+  const clientTasks = tasks.filter((task) => task.clientId === clientId);
+
+  const clientNotes = notes.filter((note) => note.clientId === clientId);
+
+  const clientRequests = serviceRequests.filter(
+    (request) => request.clientId === clientId
+  );
+
+  const clientActivity = activity.filter(
+    (activity) => activity.clientId === clientId
+  );
+
+  const clientQuotes = quotes.filter(
+    (quote) => quote.clientId === clientId
+  );
+
+  const clientInvoices = invoices.filter(
+    (invoice) => invoice.clientId === clientId
+  );
+
+  const clientFiles = files.filter((file) => file.clientId === clientId);
 
   return (
     <>

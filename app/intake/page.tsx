@@ -1,20 +1,15 @@
 "use client";
 
 import { useState } from "react";
-
 import { useCrm } from "@/context/crm-context";
-
 import type {
   IntakeSubmission,
   IntakeSubmissionStatus,
 } from "@/types/intake-submission";
-
 import { PageActions } from "@/components/page-actions";
 import { PageHeader } from "@/components/page-header";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
 import {
   Card,
   CardContent,
@@ -22,9 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 import { Input } from "@/components/ui/input";
-
 import {
   Table,
   TableBody,
@@ -33,17 +26,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import Link from "next/link";
 
-const statusVariants = {
+
+
+export default function IntakePage() {
+  const statusVariants = {
   New: "secondary",
   Reviewed: "default",
   Converted: "outline",
   Ignored: "destructive",
 } as const;
-
-export default function IntakePage() {
   const {
     intakeSubmissions,
     setIntakeSubmissions,
@@ -141,6 +134,7 @@ export default function IntakePage() {
                 <TableHead>Company</TableHead>
                 <TableHead>Project Type</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Priority</TableHead>
                 <TableHead>Submitted</TableHead>
                 <TableHead>Action</TableHead>
               </TableRow>
@@ -174,6 +168,8 @@ export default function IntakePage() {
                       {submission.status}
                     </Badge>
                   </TableCell>
+
+                  <TableCell>{submission.priority}</TableCell>
 
                   <TableCell>
                     {submission.submittedAt}

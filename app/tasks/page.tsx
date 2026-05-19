@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { mockTasks } from "@/data/mock-tasks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,24 +21,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageActions } from "@/components/page-actions";
-import { Task, TaskStatus } from "@/types/task";
-import { TaskPriority } from "@/types/task";
-import { mockProjects } from "@/data/mock-projects";
+import { useCrm } from "@/context/crm-context";
+import type { Task, TaskStatus, TaskPriority } from "@/types/task";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const statusVariants = {
+
+
+
+export default function TasksPage() {
+  const statusVariants = {
   Todo: "secondary",
   "In Progress": "default",
   Blocked: "destructive",
   Done: "outline",
 } as const;
 
-
-export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+ const { tasks, setTasks, projects } = useCrm();
   const [open, setOpen] = useState(false);
   
   const [title, setTitle] = useState("");
@@ -67,7 +67,7 @@ export default function TasksPage() {
 });
 
   function handleAddTask() {
-  const project = mockProjects.find((project) => project.id === projectId);
+  const project = projects.find((project) => project.id === projectId);
 
   if (!project) return;
 
@@ -161,7 +161,7 @@ export default function TasksPage() {
           </SelectTrigger>
 
           <SelectContent>
-            {mockProjects.map((project) => (
+            {projects.map((project) => (
               <SelectItem key={project.id} value={project.id}>
                 {project.name}
               </SelectItem>

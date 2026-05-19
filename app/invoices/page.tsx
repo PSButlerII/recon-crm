@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { mockInvoices } from "@/data/mock-billing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageActions } from "@/components/page-actions";
+import { useCrm } from "@/context/crm-context";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -26,6 +26,8 @@ const money = new Intl.NumberFormat("en-US", {
 });
 
 export default function InvoicesPage() {
+  const {  invoices } = useCrm();
+
   return (
     <>
       <PageActions>
@@ -57,7 +59,7 @@ export default function InvoicesPage() {
             </TableHeader>
 
             <TableBody>
-              {mockInvoices.map((invoice) => (
+              {invoices.map((invoice) => (
                 <TableRow key={invoice.id}>
                   <TableCell className="font-medium">{invoice.title}</TableCell>
 

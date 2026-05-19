@@ -1,8 +1,7 @@
+"use client"
+
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { mockClients } from "@/data/mock-clients";
-import { mockProjects } from "@/data/mock-projects";
-import { mockTasks } from "@/data/mock-tasks";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -11,42 +10,59 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { mockServiceRequests } from "@/data/mock-service-requests";
+import { useCrm } from "@/context/crm-context";
 
-
-const leadClients = mockClients.filter((client) => client.status === "Lead");
-const activeClients = mockClients.filter((client) => client.status === "Active");
-
-const activeProjects = mockProjects.filter(
-  (project) => project.status === "Active"
-);
-
-const openRequests = mockServiceRequests.filter(
-  (request) =>
-    request.status !== "Declined" &&
-    request.status !== "Converted"
-);
-
-const openProjects = mockProjects.filter(
-  (project) => project.status !== "Completed" && project.status !== "Cancelled"
-);
-
-const openTasks = mockTasks.filter((task) => task.status !== "Done");
-const overdueTasks = openTasks.filter((task) => {
-  if (!task.dueDate) return false;
-  return new Date(task.dueDate) < new Date();
-});
-const upcomingTasks = [...openTasks]
-  .filter((task) => task.dueDate)
-  .sort((a, b) => {
-    return (
-      new Date(a.dueDate ?? "").getTime() -
-      new Date(b.dueDate ?? "").getTime()
-    );
-  })
-  .slice(0, 5);
 
 export default function DashboardPage() {
+ const {
+    clients,
+    projects,
+    tasks,
+    serviceRequests,
+    intakeSubmissions,
+  } = useCrm();
+
+  const leadClients = clients.filter((client) => client.status === "Lead");
+  const activeClients = clients.filter((client) => client.status === "Active");
+
+  const activeProjects = projects.filter(
+    (project) => project.status === "Active"
+  );
+
+  const openRequests = serviceRequests.filter(
+    (request) =>
+      request.status !== "Declined" &&
+      request.status !== "Converted"
+  );
+
+  const openProjects = projects.filter(
+    (project) =>
+      project.status !== "Completed" &&
+      project.status !== "Cancelled"
+  );
+
+  const newIntake = intakeSubmissions.filter(
+    (submission) => submission.status === "New"
+  );
+
+  const openTasks = tasks.filter((task) => task.status !== "Done");
+
+  const overdueTasks = openTasks.filter((task) => {
+    if (!task.dueDate) return false;
+    return new Date(task.dueDate) < new Date();
+  });
+
+  const upcomingTasks = [...openTasks]
+    .filter((task) => task.dueDate)
+    .sort((a, b) => {
+      return (
+        new Date(a.dueDate ?? "").getTime() -
+        new Date(b.dueDate ?? "").getTime()
+      );
+    })
+    .slice(0, 5);
+
+
   return (
     <>
       <PageHeader
@@ -59,7 +75,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardDescription>Active Clients</CardDescription>
             <CardTitle className="text-3xl">
-              {mockClients.filter((client) => client.status === "Active").length}
+              {clients.filter((client) => client.status === "Active").length}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -105,6 +121,13 @@ export default function DashboardPage() {
           <CardHeader>
             <CardDescription>Open Projects</CardDescription>
             <CardTitle className="text-3xl">{openProjects.length}</CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardDescription>New Intake</CardDescription>
+            <CardTitle className="text-2xl">{newIntake.length}</CardTitle>
           </CardHeader>
         </Card>
 
@@ -163,6 +186,30 @@ export default function DashboardPage() {
                   {request.category} · {request.status}
                 </p>
               </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>New Intake</CardTitle>
+            <CardDescription>
+              Website inquiries that need review.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-3">
+            {newIntake.map((submission) => (
+              <Link
+                key={submission.id}
+                href={`/intake/${submission.id}`}
+                className="block rounded-xl border p-4 hover:bg-slate-50"
+              >
+                <p className="font-medium">{submission.company || submission.name}</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {submission.projectType} · {submission.priority}
+                </p>
+              </Link>
             ))}
           </CardContent>
         </Card>

@@ -21,14 +21,17 @@ type IntakeDetailPageProps = {
   }>;
 };
 
-const statusVariants = {
+
+
+export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
+
+  const statusVariants = {
   New: "secondary",
   Reviewed: "default",
   Converted: "outline",
   Ignored: "destructive",
 } as const;
 
-export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
   const { submissionId } = use(params);
 
   const {
@@ -164,6 +167,26 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
               <p className="font-medium">
                 {submission.preferredContact || "—"}
               </p>
+            </div>
+            
+            <div>
+              <p className="text-slate-500">Inquiry ID</p>
+              <p className="font-medium">{submission.inquiryId}</p>
+            </div>
+
+            <div>
+              <p className="text-slate-500">Source</p>
+              <p className="font-medium">{submission.source}</p>
+            </div>
+
+            <div>
+              <p className="text-slate-500">Priority</p>
+              <p className="font-medium">{submission.priority}</p>
+            </div>
+
+            <div>
+              <p className="text-slate-500">Submitted At</p>
+              <p className="font-medium">{submission.submittedAt}</p>
             </div>
           </CardContent>
         </Card>

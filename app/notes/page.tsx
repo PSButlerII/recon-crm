@@ -1,8 +1,5 @@
 "use client";
-
 import { useState } from "react";
-import { StickyNote } from "lucide-react";
-
 import { PageActions } from "@/components/page-actions";
 import { PageHeader } from "@/components/page-header";
 import { WorkspaceItem } from "@/components/workspace-item";

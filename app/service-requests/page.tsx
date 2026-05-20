@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { PageActions } from "@/components/page-actions";
@@ -34,7 +34,7 @@ import { ServiceRequest, ServiceRequestStatus } from "@/types/service-request";
 
 export default function ServiceRequestsPage() {
   const [statusFilter, setStatusFilter] =
-  useState<"All" | ServiceRequestStatus>("Reviewing");
+  useState<"All" | ServiceRequestStatus>("All");
 
   const statusVariants = {
     New: "secondary",
@@ -114,7 +114,7 @@ export default function ServiceRequestsPage() {
   setConvertOpen(false);  
   }
 
-  function handleAddRequest() {
+  async function handleAddRequest() {
   const client = clients.find((client) => client.id === clientId);
 
   const newRequest: ServiceRequest = {
@@ -128,7 +128,36 @@ export default function ServiceRequestsPage() {
     requestedAt: new Date().toISOString().split("T")[0],
   };
 
-  setServiceRequests((current) => [newRequest, ...current]);
+  const response = await fetch("/api/service-requests", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(newRequest),
+});
+
+if (!response.ok) {
+  console.error("Failed to persist service request.");
+  return;
+}
+
+const data = await response.json();
+const savedRequest = data.serviceRequest;
+
+setServiceRequests((current) => [
+  {
+    id: savedRequest.id,
+    intakeSubmissionId: savedRequest.intakeSubmissionId ?? undefined,
+    clientId: savedRequest.clientId ?? undefined,
+    clientName: savedRequest.clientName ?? undefined,
+    title: savedRequest.title,
+    description: savedRequest.description,
+    category: savedRequest.category,
+    status: savedRequest.status,
+    requestedAt: savedRequest.requestedAt,
+  },
+  ...current,
+]);
 
   setTitle("");
   setDescription("");
@@ -136,8 +165,49 @@ export default function ServiceRequestsPage() {
   setClientId("");
   setStatus("New");
   setOpen(false);
-}
+  }
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function loadServiceRequests() {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/service-requests");
+      
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to load service requests.");
+      }
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load service requests.");
+      }
+
+      setServiceRequests(
+        data.serviceRequests.map((item: any) => ({
+          id: item.id,
+          intakeSubmissionId: item.intakeSubmissionId ?? undefined,
+          clientId: item.clientId ?? undefined,
+          clientName: item.clientName ?? undefined,
+          title: item.title,
+          description: item.description,
+          category: item.category,
+          status: item.status,
+          requestedAt: item.requestedAt,
+        }))
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadServiceRequests();
+  }, []);
   return (
     <>
       <PageActions>
@@ -168,7 +238,9 @@ export default function ServiceRequestsPage() {
             <SelectItem value="Converted">Converted</SelectItem>
           </SelectContent>
         </Select>
-
+        <Button variant="outline" onClick={loadServiceRequests}>
+          {isLoading ? "Refreshing..." : "Refresh"}
+        </Button>
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
@@ -231,6 +303,8 @@ export default function ServiceRequestsPage() {
                   onChange={(e) => setCategory(e.target.value)}
                 />
               </div>
+
+
 
               <div className="space-y-2">
                 <Label>Status</Label>

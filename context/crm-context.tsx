@@ -6,24 +6,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
-import { mockClients } from "@/data/mock-clients";
-import { mockProjects } from "@/data/mock-projects";
-import { mockTasks } from "@/data/mock-tasks";
-import { mockNotes } from "@/data/mock-notes";
-import { mockServiceRequests } from "@/data/mock-service-requests";
-
 import type { Client } from "@/types/client";
 import type { Project } from "@/types/project";
 import type { Task } from "@/types/task";
 import type { Note } from "@/types/note";
 import type { ServiceRequest } from "@/types/service-request";
-import { mockIntakeSubmissions } from "@/data/mock-intake-submissions";
 import type { IntakeSubmission } from "@/types/intake-submission";
-import { mockFiles } from "@/data/mock-files";
-import { mockActivity } from "@/data/mock-activity";
-import { mockQuotes, mockInvoices } from "@/data/mock-billing";
-
 import type { FileRecord } from "@/types/file-record";
 import type { Activity } from "@/types/activity";
 import type { Quote, Invoice } from "@/types/billing";
@@ -63,16 +51,16 @@ type CrmContextType = {
 const CrmContext = createContext<CrmContextType | undefined>(undefined);
 
 export function CrmProvider({ children }: { children: ReactNode }) {
-  const [clients, setClients] = useState<Client[]>(mockClients);
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [notes, setNotes] = useState<Note[]>(mockNotes);
-  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>(mockServiceRequests);
-  const [intakeSubmissions, setIntakeSubmissions] = useState<IntakeSubmission[]>(mockIntakeSubmissions);
-  const [files, setFiles] = useState<FileRecord[]>(mockFiles);
-  const [activity, setActivity] = useState<Activity[]>(mockActivity);
-  const [quotes, setQuotes] = useState<Quote[]>(mockQuotes);
-  const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [files, setFiles] = useState<FileRecord[]>([]);
+  const [activity, setActivity] = useState<Activity[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [intakeSubmissions, setIntakeSubmissions] = useState<IntakeSubmission[]>([]);
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
 
   return (
     <CrmContext.Provider

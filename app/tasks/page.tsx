@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -66,9 +66,9 @@ export default function TasksPage() {
     statusFilter === "All" || task.status === statusFilter;
 
   return matchesSearch && matchesStatus;
-});
+  });
 
-  function handleAddTask() {
+  async function handleAddTask() {
   const project = projects.find((project) => project.id === projectId);
 
   if (!project) return;
@@ -86,7 +86,38 @@ export default function TasksPage() {
     dueDate,
   };
 
-    setTasks((current) => [newTask, ...current]);
+    const response = await fetch("/api/tasks", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newTask),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to persist task.");
+      return;
+    }
+
+    const data = await response.json();
+    const savedTask = data.task;
+
+    setTasks((current) => [
+      {
+        id: savedTask.id,
+        projectId: savedTask.projectId,
+        projectName: savedTask.projectName,
+        clientId: savedTask.clientId ?? undefined,
+        clientName: savedTask.clientName ?? undefined,
+        title: savedTask.title,
+        description: savedTask.description ?? undefined,
+        status: savedTask.status,
+        priority: savedTask.priority,
+        dueDate: savedTask.dueDate ?? undefined,
+      },
+      ...current,
+    ]);
+
     setActivity((current) => [
     {
       id: crypto.randomUUID(),
@@ -108,6 +139,46 @@ export default function TasksPage() {
     setSuccessMessage(`Task "${title}" was added.`);
     setOpen(false);
   }
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function loadTasks() {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/tasks");
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to load tasks.");
+      }
+
+      const data = await response.json();
+
+      setTasks(
+        data.tasks.map((item: any) => ({
+          id: item.id,
+          projectId: item.projectId,
+          projectName: item.projectName,
+          clientId: item.clientId ?? undefined,
+          clientName: item.clientName ?? undefined,
+          title: item.title,
+          description: item.description ?? undefined,
+          status: item.status,
+          priority: item.priority,
+          dueDate: item.dueDate ?? undefined,
+        }))
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
   return (
     <>
       <PageActions>
@@ -115,154 +186,159 @@ export default function TasksPage() {
           title="Tasks"
           description="Track action items across clients and projects."
         />
- <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              placeholder="Search clients..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        
+        <Button variant="outline" onClick={loadTasks}>
+          {isLoading ? "Refreshing..." : "Refresh"}
+        </Button>
 
-            <Select
-              value={statusFilter}
-              onValueChange={(value) =>
-                setStatusFilter(value as "All" | TaskStatus)
-              }
-            >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
+        <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      placeholder="Search clients..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
 
-              <SelectContent>
-                <SelectItem value="All">All</SelectItem>
-                <SelectItem value="In Progress">In Progress</SelectItem>
-                <SelectItem value="Blocked">Blocked</SelectItem>
-                <SelectItem value="Todo">Todo</SelectItem>
-                <SelectItem value="Done">Done</SelectItem>
-              </SelectContent>
-            </Select>
-        <Dialog open={open} onOpenChange={setOpen}>
-  <DialogTrigger asChild>
-    <Button>Add Task</Button>
-  </DialogTrigger>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(value) =>
+                        setStatusFilter(value as "All" | TaskStatus)
+                      }
+                    >
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
 
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Create Task</DialogTitle>
-      <DialogDescription>
-        Create a new task linked to a project.
-      </DialogDescription>
-    </DialogHeader>
+                      <SelectContent>
+                        <SelectItem value="All">All</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Blocked">Blocked</SelectItem>
+                        <SelectItem value="Todo">Todo</SelectItem>
+                        <SelectItem value="Done">Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+                <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>Add Task</Button>
+          </DialogTrigger>
 
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Task Name</Label>
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-      </div>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Task</DialogTitle>
+              <DialogDescription>
+                Create a new task linked to a project.
+              </DialogDescription>
+            </DialogHeader>
 
-      <div className="space-y-2">
-        <Label>Project</Label>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Task Name</Label>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
 
-        <Select
-          value={projectId}
-          onValueChange={(value) => setProjectId(value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select project" />
-          </SelectTrigger>
+              <div className="space-y-2">
+                <Label>Project</Label>
 
-          <SelectContent>
-            {projects.map((project) => (
-              <SelectItem key={project.id} value={project.id}>
-                {project.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+                <Select
+                  value={projectId}
+                  onValueChange={(value) => setProjectId(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select project" />
+                  </SelectTrigger>
 
-      <div className="space-y-2">
-        <Label>Description</Label>
+                  <SelectContent>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <Input
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>Status</Label>
+                <Input
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
 
-          <Select
-            value={status}
-            onValueChange={(value) =>
-              setStatus(value as TaskStatus)
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Status</Label>
 
-            <SelectContent>
-              <SelectItem value="Planning">Planning</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="On Hold">On Hold</SelectItem>
-              <SelectItem value="Completed">Completed</SelectItem>
-              <SelectItem value="Cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
+                  <Select
+                    value={status}
+                    onValueChange={(value) =>
+                      setStatus(value as TaskStatus)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="Planning">Planning</SelectItem>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="On Hold">On Hold</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Priority</Label>
+
+                  <Select
+                    value={priority}
+                    onValueChange={(value) =>
+                      setPriority(value as TaskPriority)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+              
+                <div className="space-y-2">
+                  <Label>Due Date</Label>
+
+                  <Input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={handleAddTask}
+                disabled={!title || !projectId}
+              >
+                Save Task
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         </div>
-
-        <div className="space-y-2">
-          <Label>Priority</Label>
-
-          <Select
-            value={priority}
-            onValueChange={(value) =>
-              setPriority(value as TaskPriority)
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-
-            <SelectContent>
-              <SelectItem value="Low">Low</SelectItem>
-              <SelectItem value="Medium">Medium</SelectItem>
-              <SelectItem value="High">High</SelectItem>
-              <SelectItem value="Urgent">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-       
-        <div className="space-y-2">
-          <Label>Due Date</Label>
-
-          <Input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <Button
-        className="w-full"
-        onClick={handleAddTask}
-        disabled={!title || !projectId}
-      >
-        Save Task
-      </Button>
-    </div>
-  </DialogContent>
-</Dialog>
-</div>
       </PageActions>
 {successMessage && (
   <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">

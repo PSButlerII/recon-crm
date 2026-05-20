@@ -141,7 +141,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   setNoteType("General");
   }
 
-  function handleAddProjectTask() {
+  async function handleAddProjectTask() {
   if (!taskTitle) return;
    if (!project) {
     notFound();
@@ -160,7 +160,37 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     dueDate: taskDueDate,
   };
 
-  setTasks((current) => [newTask, ...current]);
+  const response = await fetch("/api/tasks", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newTask),
+  });
+
+  if (!response.ok) {
+    console.error("Failed to persist task.");
+    return;
+  }
+
+  const data = await response.json();
+  const savedTask = data.task;
+
+  setTasks((current) => [
+    {
+      id: savedTask.id,
+      projectId: savedTask.projectId,
+      projectName: savedTask.projectName,
+      clientId: savedTask.clientId ?? undefined,
+      clientName: savedTask.clientName ?? undefined,
+      title: savedTask.title,
+      description: savedTask.description ?? undefined,
+      status: savedTask.status,
+      priority: savedTask.priority,
+      dueDate: savedTask.dueDate ?? undefined,
+    },
+    ...current,
+  ]);
 
   setActivity((current) => [
     {
@@ -181,59 +211,74 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   setTaskDueDate("");
   }
 
-function handleUpdateTaskStatus(taskId: string, status: TaskStatus) {
-  const task = tasks.find((task) => task.id === taskId);
-  if (!project) {
-    notFound();
-  }
-  if (!task) return;
+  async function handleUpdateTaskStatus(taskId: string, status: TaskStatus) {
+    const task = tasks.find((task) => task.id === taskId);
+    if (!project) {
+      notFound();
+    }
+    if (!task) return;
 
-  setTasks((current) =>
-    current.map((task) =>
-      task.id === taskId ? { ...task, status } : task
-    )
-  );
-
-  setProjects((current) =>
-    current.map((item) => {
-      if (item.id !== project.id) return item;
-
-      const updatedTasks = tasks.map((task) =>
+    setTasks((current) =>
+      current.map((task) =>
         task.id === taskId ? { ...task, status } : task
-      );
+      )
+    );
+    
+    const response = await fetch("/api/tasks", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: taskId,
+        status,
+      }),
+    });
 
-      const projectUpdatedTasks = updatedTasks.filter(
-        (task) => task.projectId === project.id
-      );
+    if (!response.ok) {
+      console.error("Failed to persist task status update.");
+    }
 
-      const doneTasks = projectUpdatedTasks.filter(
-        (task) => task.status === "Done"
-      );
+    setProjects((current) =>
+      current.map((item) => {
+        if (item.id !== project.id) return item;
 
-      const nextProgress =
-        projectUpdatedTasks.length > 0
-          ? Math.round((doneTasks.length / projectUpdatedTasks.length) * 100)
-          : item.progress;
+        const updatedTasks = tasks.map((task) =>
+          task.id === taskId ? { ...task, status } : task
+        );
 
-      return {
-        ...item,
-        progress: nextProgress,
-      };
-    })
-  );
+        const projectUpdatedTasks = updatedTasks.filter(
+          (task) => task.projectId === project.id
+        );
 
-  setActivity((current) => [
-    {
-      id: crypto.randomUUID(),
-      clientId: task.clientId,
-      projectId: task.projectId,
-      type: "Task",
-      message: `Task "${task.title}" moved to ${status}.`,
-      createdAt: new Date().toLocaleString(),
-    },
-    ...current,
-  ]);
-}
+        const doneTasks = projectUpdatedTasks.filter(
+          (task) => task.status === "Done"
+        );
+
+        const nextProgress =
+          projectUpdatedTasks.length > 0
+            ? Math.round((doneTasks.length / projectUpdatedTasks.length) * 100)
+            : item.progress;
+
+        return {
+          ...item,
+          progress: nextProgress,
+        };
+      })
+    );
+
+    setActivity((current) => [
+      {
+        id: crypto.randomUUID(),
+        clientId: task.clientId,
+        projectId: task.projectId,
+        type: "Task",
+        message: `Task "${task.title}" moved to ${status}.`,
+        createdAt: new Date().toLocaleString(),
+      },
+      ...current,
+    ]);
+  }
 
   if (!project) {
     notFound();

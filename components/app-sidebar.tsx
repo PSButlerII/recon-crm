@@ -13,8 +13,8 @@ import {
   ClipboardList,
   Inbox,
   Bug,
+  History,
 } from "lucide-react";
-import { Stick } from "next/font/google";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -29,6 +29,7 @@ const navItems = [
   { href: "/notes", label: "Notes", icon: StickyNote },
   { href: "/service-requests", label: "Requests", icon: ClipboardList },
   { href: "/intake", label: "Intake", icon: Inbox },
+  { href: "/activity", label: "Activity", icon: History },
   { href: "/debug", label: "Debug", icon: Bug }
 ];
 

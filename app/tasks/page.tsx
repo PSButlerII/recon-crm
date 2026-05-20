@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
+import { logActivity } from "@/lib/log-activity";
 
 
 
@@ -69,75 +69,84 @@ export default function TasksPage() {
   });
 
   async function handleAddTask() {
-  const project = projects.find((project) => project.id === projectId);
+    const project = projects.find((project) => project.id === projectId);
 
-  if (!project) return;
+    if (!project) return;
 
-  const newTask: Task = {
-    id: crypto.randomUUID(),
-    projectId: project.id,
-    projectName: project.name,
-    clientId: project.clientId,
-    clientName: project.clientName,
-    title,
-    description,
-    status,
-    priority,
-    dueDate,
-  };
-
-    const response = await fetch("/api/tasks", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newTask),
-    });
-
-    if (!response.ok) {
-      console.error("Failed to persist task.");
-      return;
-    }
-
-    const data = await response.json();
-    const savedTask = data.task;
-
-    setTasks((current) => [
-      {
-        id: savedTask.id,
-        projectId: savedTask.projectId,
-        projectName: savedTask.projectName,
-        clientId: savedTask.clientId ?? undefined,
-        clientName: savedTask.clientName ?? undefined,
-        title: savedTask.title,
-        description: savedTask.description ?? undefined,
-        status: savedTask.status,
-        priority: savedTask.priority,
-        dueDate: savedTask.dueDate ?? undefined,
-      },
-      ...current,
-    ]);
-
-    setActivity((current) => [
-    {
+    const newTask: Task = {
       id: crypto.randomUUID(),
-      clientId: newTask.clientId,
-      projectId: newTask.projectId,
-      type: "Task",
-      message: `Created task "${newTask.title}".`,
-      createdAt: new Date().toLocaleString(),
-    },
-    ...current,
-    ]);
+      projectId: project.id,
+      projectName: project.name,
+      clientId: project.clientId,
+      clientName: project.clientName,
+      title,
+      description,
+      status,
+      priority,
+      dueDate,
+    };
 
-    setTitle("");
-    setProjectId("");
-    setDescription("");
-    setStatus("Todo");
-    setPriority("Medium");
-    setDueDate("");
-    setSuccessMessage(`Task "${title}" was added.`);
-    setOpen(false);
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTask),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to persist task.");
+        return;
+      }
+
+      const data = await response.json();
+      const savedTask = data.task;
+
+      setTasks((current) => [
+        {
+          id: savedTask.id,
+          projectId: savedTask.projectId,
+          projectName: savedTask.projectName,
+          clientId: savedTask.clientId ?? undefined,
+          clientName: savedTask.clientName ?? undefined,
+          title: savedTask.title,
+          description: savedTask.description ?? undefined,
+          status: savedTask.status,
+          priority: savedTask.priority,
+          dueDate: savedTask.dueDate ?? undefined,
+        },
+        ...current,
+      ]);
+
+      const savedActivity = await logActivity({
+        clientId: newTask.clientId,
+        projectId: newTask.projectId,
+        type: "Task",
+        message: `Created task "${newTask.title}".`,
+      });
+
+      if (savedActivity) {
+        setActivity((current) => [
+          {
+            id: savedActivity.id,
+            clientId: savedActivity.clientId ?? undefined,
+            projectId: savedActivity.projectId ?? undefined,
+            type: savedActivity.type,
+            message: savedActivity.message,
+            createdAt: savedActivity.createdAt,
+          },
+          ...current,
+        ]);
+      }
+
+      setTitle("");
+      setProjectId("");
+      setDescription("");
+      setStatus("Todo");
+      setPriority("Medium");
+      setDueDate("");
+      setSuccessMessage(`Task "${title}" was added.`);
+      setOpen(false);
   }
   const [isLoading, setIsLoading] = useState(false);
 

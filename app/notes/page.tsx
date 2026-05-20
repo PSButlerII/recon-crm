@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCrm } from "@/context/crm-context";
+import { logActivity } from "@/lib/log-activity";
+
 
 export default function NotesPage() {
     const [search, setSearch] = useState("");
@@ -27,15 +29,15 @@ export default function NotesPage() {
     const [clientId, setClientId] = useState("");
     const [projectId, setProjectId] = useState("");
     const filteredNotes = notes.filter((note) => {
-    const matchesSearch =
-    note.title.toLowerCase().includes(search.toLowerCase()) ||
-    note.body.toLowerCase().includes(search.toLowerCase()) ||
-    note.type.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch =
+      note.title.toLowerCase().includes(search.toLowerCase()) ||
+      note.body.toLowerCase().includes(search.toLowerCase()) ||
+      note.type.toLowerCase().includes(search.toLowerCase());
 
-  const matchesType = typeFilter === "All" || note.type === typeFilter;
+    const matchesType = typeFilter === "All" || note.type === typeFilter;
 
-  return matchesSearch && matchesType;
-});
+    return matchesSearch && matchesType;
+    });
 
   async function handleAddNote() {
     const selectedProject = projects.find((project) => project.id === projectId);
@@ -80,18 +82,26 @@ export default function NotesPage() {
       ...current,
     ]);
 
-    setActivity((current) => [
-      {
-        id: crypto.randomUUID(),
-        clientId: newNote.clientId,
-        projectId: newNote.projectId,
-        type: "Note",
-        message: `Created note "${newNote.title}".`,
-        createdAt: new Date().toLocaleString(),
-      },
-      ...current,
-    ]);
+    const savedActivity = await logActivity({
+      clientId: newNote.clientId,
+      projectId: newNote.projectId,
+      type: "Note",
+      message: `Created note "${newNote.title}".`,
+    });
 
+    if (savedActivity) {
+      setActivity((current) => [
+        {
+          id: savedActivity.id,
+          clientId: savedActivity.clientId ?? undefined,
+          projectId: savedActivity.projectId ?? undefined,
+          type: savedActivity.type,
+          message: savedActivity.message,
+          createdAt: savedActivity.createdAt,
+        },
+        ...current,
+      ]);
+    }
     setTitle("");
     setBody("");
     setType("General");
@@ -99,7 +109,6 @@ export default function NotesPage() {
     setProjectId("");
     setOpen(false);
   }
-
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -145,7 +154,7 @@ export default function NotesPage() {
           title="Notes"
           description="Capture calls, decisions, reminders, research, and project context."
         />
-        
+
         <Button variant="outline" onClick={loadNotes}>
           {isLoading ? "Refreshing..." : "Refresh"}
         </Button>

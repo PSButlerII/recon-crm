@@ -151,17 +151,26 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       ...current,
     ]);
 
-    setActivity((current) => [
-      {
-        id: crypto.randomUUID(),
-        clientId: project.clientId,
-        projectId: project.id,
-        type: "Note",
-        message: `Added note "${newNote.title}".`,
-        createdAt: new Date().toLocaleString(),
-      },
-      ...current,
-    ]);
+    const savedActivity = await logActivity({
+      clientId: project.clientId,
+      projectId: project.id,
+      type: "Note",
+      message: `Added note "${newNote.title}".`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => [
+        {
+          id: savedActivity.id,
+          clientId: savedActivity.clientId ?? undefined,
+          projectId: savedActivity.projectId ?? undefined,
+          type: savedActivity.type,
+          message: savedActivity.message,
+          createdAt: savedActivity.createdAt,
+        },
+        ...current,
+      ]);
+    }
 
     setNoteTitle("");
     setNoteBody("");
@@ -303,17 +312,26 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       })
     );
 
-    setActivity((current) => [
-      {
-        id: crypto.randomUUID(),
-        clientId: task.clientId,
-        projectId: task.projectId,
-        type: "Task",
-        message: `Task "${task.title}" moved to ${status}.`,
-        createdAt: new Date().toLocaleString(),
-      },
-      ...current,
-    ]);
+    const savedActivity = await logActivity({
+      clientId: task.clientId,
+      projectId: task.projectId,
+      type: "Task",
+      message: `Task "${task.title}" moved to ${status}.`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => [
+        {
+          id: savedActivity.id,
+          clientId: savedActivity.clientId ?? undefined,
+          projectId: savedActivity.projectId ?? undefined,
+          type: savedActivity.type,
+          message: savedActivity.message,
+          createdAt: savedActivity.createdAt,
+        },
+        ...current,
+      ]);
+    }
   }
 
   if (!project) {

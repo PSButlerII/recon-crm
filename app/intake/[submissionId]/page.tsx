@@ -38,6 +38,7 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
     intakeSubmissions,
     setIntakeSubmissions,
     setServiceRequests,
+    setActivity,
   } = useCrm();
 
   const submission = intakeSubmissions.find(
@@ -49,37 +50,47 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
   }
 
   function handleConvertToRequest() {
-  const currentSubmission = intakeSubmissions.find(
-    (item) => item.id === submissionId
-  );
+    const currentSubmission = intakeSubmissions.find(
+      (item) => item.id === submissionId
+    );
 
-  if (!currentSubmission) return;
+    if (!currentSubmission) return;
+    if (!submission) return;
 
-  setServiceRequests((current) => [
-    {
+    const newRequest = {
       id: crypto.randomUUID(),
-      intakeSubmissionId: currentSubmission.id,
-      clientName: currentSubmission.company || currentSubmission.name,
-      title: `${currentSubmission.projectType || "General Inquiry"} Request`,
+      intakeSubmissionId: submission.id,
+      clientName: submission.company || submission.name,
+      title: `${submission.projectType || "General Inquiry"} Request`,
       description:
-        currentSubmission.message ||
-        currentSubmission.goal ||
+        submission.message ||
+        submission.goal ||
         "No description provided.",
-      category: currentSubmission.projectType || "General",
-      status: "New",
-      requestedAt: currentSubmission.submittedAt,
-    },
-    ...current,
-  ]);
+      category: submission.projectType || "General",
+      status: "New" as const,
+      requestedAt: submission.submittedAt,
+    };
+    
+    setServiceRequests((current) => [newRequest, ...current]);
 
-  setIntakeSubmissions((current) =>
-    current.map((item) =>
-      item.id === currentSubmission.id
-        ? { ...item, status: "Converted" }
-        : item
-    )
-  );
-}
+    setActivity((current) => [
+      {
+        id: crypto.randomUUID(),
+        type: "System",
+        message: `Converted intake "${submission.inquiryId}" to service request "${newRequest.title}".`,
+        createdAt: new Date().toLocaleString(),
+      },
+      ...current,
+    ]);
+
+    setIntakeSubmissions((current) =>
+      current.map((item) =>
+        item.id === currentSubmission.id
+          ? { ...item, status: "Converted" }
+          : item
+      )
+    );
+  }
 
   function updateSubmissionStatus(status: "Reviewed" | "Ignored") {
   setIntakeSubmissions((current) =>

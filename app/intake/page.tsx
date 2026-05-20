@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 
@@ -36,12 +37,14 @@ export default function IntakePage() {
   Reviewed: "default",
   Converted: "outline",
   Ignored: "destructive",
-} as const;
+  } as const;
+
   const {
     intakeSubmissions,
     setIntakeSubmissions,
     serviceRequests,
     setServiceRequests,
+    setActivity
   } = useCrm();
 
   const [search, setSearch] = useState("");
@@ -69,20 +72,28 @@ export default function IntakePage() {
     );
 
     if (!submission) return;
+    
+    const newRequest = {
+      id: crypto.randomUUID(),
+      intakeSubmissionId: submission.id,
+      clientName: submission.company || submission.name,
+      title: `${submission.projectType || "General Inquiry"} Request`,
+      description:
+        submission.message ||
+        submission.goal ||
+        "No description provided.",
+      category: submission.projectType || "General",
+      status: "New" as const,
+      requestedAt: submission.submittedAt,
+    };
+    setServiceRequests((current) => [newRequest, ...current]);
 
-    setServiceRequests((current) => [
+    setActivity((current) => [
       {
         id: crypto.randomUUID(),
-        intakeSubmissionId: submission.id,
-        clientName: submission.company || submission.name,
-        title: `${submission.projectType || "General Inquiry"} Request`,
-        description:
-          submission.message ||
-          submission.goal ||
-          "No description provided.",
-        category: submission.projectType || "General",
-        status: "New",
-        requestedAt: submission.submittedAt,
+        type: "System",
+        message: `Converted intake "${submission.inquiryId}" to service request "${newRequest.title}".`,
+        createdAt: new Date().toLocaleString(),
       },
       ...current,
     ]);
@@ -111,9 +122,25 @@ export default function IntakePage() {
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          <Button variant="outline">
-            {statusFilter}
-          </Button>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) =>
+              setStatusFilter(value as "All" | IntakeSubmissionStatus)
+            }
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="All">All</SelectItem>
+              <SelectItem value="New">New</SelectItem>
+              <SelectItem value="Reviewed">Reviewed</SelectItem>
+              <SelectItem value="Converted">Converted</SelectItem>
+              <SelectItem value="Ignored">Ignored</SelectItem>
+            </SelectContent>
+          </Select>
+
         </div>
       </PageActions>
 

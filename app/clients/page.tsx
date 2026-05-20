@@ -50,7 +50,7 @@ export default function ClientsPage() {
   Paused: "outline",
   Archived: "destructive",
 } as const;
-  const { clients, setClients } = useCrm();
+  const { clients, setClients, setActivity } = useCrm();
   const [open, setOpen] = useState(false);
 
   const [name, setName] = useState("");
@@ -84,6 +84,16 @@ export default function ClientsPage() {
     };
 
     setClients((current) => [newClient, ...current]);
+    setActivity((current) => [
+      {
+        id: crypto.randomUUID(),
+        clientId: newClient.id,
+        type: "Client",
+        message: `Created client "${newClient.name}".`,
+        createdAt: new Date().toLocaleString(),
+      },
+      ...current,
+    ]);
 
     setName("");
     setContactName("");

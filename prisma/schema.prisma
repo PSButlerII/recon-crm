@@ -89,3 +89,29 @@ model Task {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model Note {
+  id        String   @id @default(cuid())
+
+  clientId  String?
+  projectId String?
+
+  title     String
+  body      String
+  type      String   @default("General")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+
+  clientId  String?
+  projectId String?
+
+  type      String
+  message   String
+
+  createdAt DateTime @default(now())
+}

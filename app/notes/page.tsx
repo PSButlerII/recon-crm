@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { PageActions } from "@/components/page-actions";
 import { PageHeader } from "@/components/page-header";
 import { WorkspaceItem } from "@/components/workspace-item";
@@ -37,7 +37,7 @@ export default function NotesPage() {
   return matchesSearch && matchesType;
 });
 
-  function handleAddNote() {
+  async function handleAddNote() {
     const selectedProject = projects.find((project) => project.id === projectId);
     const selectedClient = clients.find((client) => client.id === clientId);
 
@@ -51,7 +51,34 @@ export default function NotesPage() {
       createdAt: new Date().toISOString().split("T")[0],
     };
 
-    setNotes((current) => [newNote, ...current]);
+    const response = await fetch("/api/notes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newNote),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to persist note.");
+      return;
+    }
+
+    const data = await response.json();
+    const savedNote = data.note;
+
+    setNotes((current) => [
+      {
+        id: savedNote.id,
+        clientId: savedNote.clientId ?? undefined,
+        projectId: savedNote.projectId ?? undefined,
+        title: savedNote.title,
+        body: savedNote.body,
+        type: savedNote.type,
+        createdAt: savedNote.createdAt,
+      },
+      ...current,
+    ]);
 
     setActivity((current) => [
       {
@@ -73,6 +100,44 @@ export default function NotesPage() {
     setOpen(false);
   }
 
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function loadNotes() {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/notes");
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to load notes.");
+      }
+
+      const data = await response.json();
+
+      setNotes(
+        data.notes.map((item: any) => ({
+          id: item.id,
+          clientId: item.clientId ?? undefined,
+          projectId: item.projectId ?? undefined,
+          title: item.title,
+          body: item.body,
+          type: item.type,
+          createdAt: item.createdAt,
+        }))
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadNotes();
+  }, []);
+
   return (
     <>
       <PageActions>
@@ -80,6 +145,11 @@ export default function NotesPage() {
           title="Notes"
           description="Capture calls, decisions, reminders, research, and project context."
         />
+        
+        <Button variant="outline" onClick={loadNotes}>
+          {isLoading ? "Refreshing..." : "Refresh"}
+        </Button>
+
         <div className="flex flex-col gap-2 sm:flex-row">
             <Input
                 placeholder="Search notes..."

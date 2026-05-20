@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { logActivity } from "@/lib/log-activity";
 
 type ProjectDetailPageProps = {
   params: Promise<{
@@ -104,41 +104,68 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       ? Math.round((completedTasks.length / projectTasks.length) * 100)
       : project.progress;
 
-  function handleAddProjectNote() {
-  if (!noteTitle || !noteBody) return;
+  async function handleAddProjectNote() {
+    if (!noteTitle || !noteBody) return;
 
-  if (!project) {
-    notFound();
-  }
+    if (!project) {
+      notFound();
+    }
 
-  const newNote = {
-    
-    id: crypto.randomUUID(),
-    clientId: project.clientId,
-    projectId: project.id,
-    title: noteTitle,
-    body: noteBody,
-    type: noteType,
-    createdAt: new Date().toISOString().split("T")[0],
-  };
-
-  setNotes((current) => [newNote, ...current]);
-
-  setActivity((current) => [
-    {
+    const newNote = {
+      
       id: crypto.randomUUID(),
       clientId: project.clientId,
       projectId: project.id,
-      type: "Note",
-      message: `Added note "${newNote.title}".`,
-      createdAt: new Date().toLocaleString(),
-    },
-    ...current,
-  ]);
+      title: noteTitle,
+      body: noteBody,
+      type: noteType,
+      createdAt: new Date().toISOString().split("T")[0],
+    };
 
-  setNoteTitle("");
-  setNoteBody("");
-  setNoteType("General");
+    const response = await fetch("/api/notes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newNote),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to persist project note.");
+      return;
+    }
+
+    const data = await response.json();
+    const savedNote = data.note;
+
+    setNotes((current) => [
+      {
+        id: savedNote.id,
+        clientId: savedNote.clientId ?? undefined,
+        projectId: savedNote.projectId ?? undefined,
+        title: savedNote.title,
+        body: savedNote.body,
+        type: savedNote.type,
+        createdAt: savedNote.createdAt,
+      },
+      ...current,
+    ]);
+
+    setActivity((current) => [
+      {
+        id: crypto.randomUUID(),
+        clientId: project.clientId,
+        projectId: project.id,
+        type: "Note",
+        message: `Added note "${newNote.title}".`,
+        createdAt: new Date().toLocaleString(),
+      },
+      ...current,
+    ]);
+
+    setNoteTitle("");
+    setNoteBody("");
+    setNoteType("General");
   }
 
   async function handleAddProjectTask() {
@@ -192,17 +219,26 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     ...current,
   ]);
 
-  setActivity((current) => [
-    {
-      id: crypto.randomUUID(),
-      clientId: project.clientId,
-      projectId: project.id,
-      type: "Task",
-      message: `Added task "${newTask.title}".`,
-      createdAt: new Date().toLocaleString(),
-    },
-    ...current,
-  ]);
+  const savedActivity = await logActivity({
+    clientId: project.clientId,
+    projectId: project.id,
+    type: "Task",
+    message: `Added task "${newTask.title}".`,
+  });
+
+  if (savedActivity) {
+    setActivity((current) => [
+      {
+        id: savedActivity.id,
+        clientId: savedActivity.clientId ?? undefined,
+        projectId: savedActivity.projectId ?? undefined,
+        type: savedActivity.type,
+        message: savedActivity.message,
+        createdAt: savedActivity.createdAt,
+      },
+      ...current,
+    ]);
+  }
 
   setTaskTitle("");
   setTaskDescription("");

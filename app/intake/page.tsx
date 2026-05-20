@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useCrm } from "@/context/crm-context";
 import type {  IntakeSubmissionStatus } from "@/types/intake-submission";
 import { PageActions } from "@/components/page-actions";
@@ -25,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
+import { useEffect, useState } from "react";
 
 export default function IntakePage() {
   const statusVariants = {
@@ -41,11 +40,97 @@ export default function IntakePage() {
     setServiceRequests,
     setActivity
   } = useCrm();
+  
+async function loadIntake() {
+  setIsLoading(true);
+
+  try {
+    const response = await fetch("/api/intake");
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to load intake.");
+    }
+
+    setIntakeSubmissions(
+      data.submissions.map((item: any) => ({
+        id: item.id,
+        inquiryId: item.inquiryId,
+        source: item.source,
+        name: item.name,
+        email: item.email,
+        company: item.company ?? undefined,
+        projectType: item.projectType,
+        goal: item.goal,
+        blocker: item.blocker ?? undefined,
+        budget: item.budget ?? undefined,
+        timeline: item.timeline ?? undefined,
+        preferredContact: item.preferredContact ?? undefined,
+        message: item.message ?? undefined,
+        submittedAt: item.submittedAt,
+        status: item.status,
+        priority: item.priority,
+      }))
+    );
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setIsLoading(false);
+  }
+}
+  const [isLoading, setIsLoading] = useState(false);
+  useEffect(() => {
+    loadIntake();
+  async function loadIntake() {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/intake");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load intake.");
+      }
+
+      setIntakeSubmissions(
+        data.submissions.map((item: any) => ({
+          id: item.id,
+          inquiryId: item.inquiryId,
+          source: item.source,
+          name: item.name,
+          email: item.email,
+          company: item.company ?? undefined,
+          projectType: item.projectType,
+          goal: item.goal,
+          blocker: item.blocker ?? undefined,
+          budget: item.budget ?? undefined,
+          timeline: item.timeline ?? undefined,
+          preferredContact: item.preferredContact ?? undefined,
+          message: item.message ?? undefined,
+          submittedAt: item.submittedAt,
+          status: item.status,
+          priority: item.priority,
+        }))
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+    loadIntake();
+     const interval = window.setInterval(() => {
+    loadIntake();
+  }, 3000000);
+   return () => window.clearInterval(interval);
+},[setIntakeSubmissions]);
+
 
   const [search, setSearch] = useState("");
 
   const [statusFilter, setStatusFilter] =
-    useState<"All" | IntakeSubmissionStatus>("New");
+    useState<"All" | IntakeSubmissionStatus>("All");
 
   const filteredSubmissions = intakeSubmissions.filter((submission) => {
     const matchesSearch =
@@ -61,7 +146,7 @@ export default function IntakePage() {
     return matchesSearch && matchesStatus;
   });
 
-  function handleConvertToRequest(submissionId: string) {
+  async function handleConvertToRequest(submissionId: string) {
     const submission = intakeSubmissions.find(
       (item) => item.id === submissionId
     );
@@ -100,6 +185,20 @@ export default function IntakePage() {
           : item
       )
     );
+    const response = await fetch("/api/intake", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: submission.id,
+        status: "Converted",
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to persist intake status update.");
+    }
   }
 
   return (
@@ -138,7 +237,14 @@ export default function IntakePage() {
 
         </div>
       </PageActions>
-
+        <div>
+            {isLoading && (
+                  <p className="mb-4 text-sm text-slate-500">
+                    Loading intake submissions...
+                  </p>
+                )}
+        </div>
+     
       <Card>
         <CardHeader>
           <CardTitle>Submission Queue</CardTitle>
@@ -149,6 +255,13 @@ export default function IntakePage() {
         </CardHeader>
 
         <CardContent>
+          <div className="mb-4 text-sm text-slate-500">
+            Loaded: {intakeSubmissions.length} |
+            Showing: {filteredSubmissions.length}
+            <Button variant="outline" onClick={loadIntake}>
+              {isLoading ? "Refreshing..." : "Refresh"}
+            </Button>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>

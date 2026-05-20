@@ -29,7 +29,7 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
   Reviewed: "default",
   Converted: "outline",
   Ignored: "destructive",
-} as const;
+  } as const;
 
   const { submissionId } = use(params);
 
@@ -48,7 +48,7 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
     return <div>Submission not found.</div>;
   }
 
-  function handleConvertToRequest() {
+  async function handleConvertToRequest() {
     const currentSubmission = intakeSubmissions.find(
       (item) => item.id === submissionId
     );
@@ -89,15 +89,45 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
           : item
       )
     );
+    const response = await fetch("/api/intake", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: currentSubmission.id,
+        status: "Converted",
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to persist intake status update.");
+    }
   }
 
-  function updateSubmissionStatus(status: "Reviewed" | "Ignored") {
-  setIntakeSubmissions((current) =>
-    current.map((item) =>
-      item.id === submissionId ? { ...item, status } : item
-    )
-  );
-}
+  async function updateSubmissionStatus(status: "Reviewed" | "Ignored") {
+    setIntakeSubmissions((current) =>
+      current.map((item) =>
+        item.id === submissionId ? { ...item, status } : item
+      )
+    );
+    if(!submission)
+      return;
+    const response = await fetch("/api/intake", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: submission.id,
+        status,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to persist intake status update.");
+    }
+  }
   return (
     <>
       <div className="mb-6">

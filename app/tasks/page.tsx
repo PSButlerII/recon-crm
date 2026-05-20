@@ -32,14 +32,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 
 export default function TasksPage() {
+  
   const statusVariants = {
   Todo: "secondary",
   "In Progress": "default",
   Blocked: "destructive",
   Done: "outline",
-} as const;
+  } as const;
 
- const { tasks, setTasks, projects } = useCrm();
+  const { tasks, setTasks, projects,setActivity } = useCrm();
+
   const [open, setOpen] = useState(false);
   
   const [title, setTitle] = useState("");
@@ -84,17 +86,28 @@ export default function TasksPage() {
     dueDate,
   };
 
-  setTasks((current) => [newTask, ...current]);
+    setTasks((current) => [newTask, ...current]);
+    setActivity((current) => [
+    {
+      id: crypto.randomUUID(),
+      clientId: newTask.clientId,
+      projectId: newTask.projectId,
+      type: "Task",
+      message: `Created task "${newTask.title}".`,
+      createdAt: new Date().toLocaleString(),
+    },
+    ...current,
+    ]);
 
-  setTitle("");
-  setProjectId("");
-  setDescription("");
-  setStatus("Todo");
-  setPriority("Medium");
-  setDueDate("");
-  setSuccessMessage(`Task "${title}" was added.`);
-  setOpen(false);
-}
+    setTitle("");
+    setProjectId("");
+    setDescription("");
+    setStatus("Todo");
+    setPriority("Medium");
+    setDueDate("");
+    setSuccessMessage(`Task "${title}" was added.`);
+    setOpen(false);
+  }
   return (
     <>
       <PageActions>

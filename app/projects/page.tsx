@@ -49,7 +49,8 @@ const statusVariants = {
 
 
 export default function ProjectsPage() {
-const { projects, setProjects, clients } = useCrm();
+const { projects, setProjects, clients,setActivity } = useCrm();
+
 const [successMessage, setSuccessMessage] = useState("");
 const [open, setOpen] = useState(false);
 
@@ -105,6 +106,18 @@ function handleAddProject() {
 
   setProjects((current) => [newProject, ...current]);
 
+  setActivity((current) => [
+    {
+      id: crypto.randomUUID(),
+      clientId: newProject.clientId,
+      projectId: newProject.id,
+      type: "Project",
+      message: `Created project "${newProject.name}".`,
+      createdAt: new Date().toLocaleString(),
+    },
+    ...current,
+  ]);
+  
   setName("");
   setClientId("");
   setDescription("");
@@ -115,6 +128,7 @@ function handleAddProject() {
   setSuccessMessage(`Project "${name}" was added.`);
   setOpen(false);
 }
+
   return (
     <>
       <PageActions>

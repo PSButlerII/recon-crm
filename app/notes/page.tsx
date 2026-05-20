@@ -18,9 +18,9 @@ export default function NotesPage() {
     const [search, setSearch] = useState("");
     const [typeFilter, setTypeFilter] = useState<"All" | NoteType>("All");
 
-    const { notes, setNotes,clients,projects } = useCrm();
-    const [open, setOpen] = useState(false);
+    const { notes, setNotes,clients,projects, setActivity } = useCrm();
 
+    const [open, setOpen] = useState(false);
     const [title, setTitle] = useState("");
     const [body, setBody] = useState("");
     const [type, setType] = useState<NoteType>("General");
@@ -52,6 +52,18 @@ export default function NotesPage() {
     };
 
     setNotes((current) => [newNote, ...current]);
+
+    setActivity((current) => [
+      {
+        id: crypto.randomUUID(),
+        clientId: newNote.clientId,
+        projectId: newNote.projectId,
+        type: "Note",
+        message: `Created note "${newNote.title}".`,
+        createdAt: new Date().toLocaleString(),
+      },
+      ...current,
+    ]);
 
     setTitle("");
     setBody("");

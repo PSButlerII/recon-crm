@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { logActivity } from "@/lib/log-activity";
 
 type IntakeDetailPageProps = {
   params: Promise<{
@@ -101,15 +102,24 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
       ...current,
     ]);
 
-    setActivity((current) => [
-      {
-        id: crypto.randomUUID(),
-        type: "System",
-        message: `Converted intake "${submission.inquiryId}" to service request "${newRequest.title}".`,
-        createdAt: new Date().toLocaleString(),
-      },
-      ...current,
-    ]);
+    const savedActivity = await logActivity({
+      type: "System",
+      message: `Converted intake "${currentSubmission.inquiryId}" to service request "${newRequest.title}".`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => [
+        {
+          id: savedActivity.id,
+          clientId: savedActivity.clientId ?? undefined,
+          projectId: savedActivity.projectId ?? undefined,
+          type: savedActivity.type,
+          message: savedActivity.message,
+          createdAt: savedActivity.createdAt,
+        },
+        ...current,
+      ]);
+    };
 
     setIntakeSubmissions((current) =>
       current.map((item) =>

@@ -25,6 +25,7 @@ import {
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from "react";
+import { logActivity } from "@/lib/log-activity";
 
 export default function IntakePage() {
   const statusVariants = {
@@ -196,15 +197,24 @@ async function loadIntake() {
       ...current,
     ]);
 
-    setActivity((current) => [
-      {
-        id: crypto.randomUUID(),
-        type: "System",
-        message: `Converted intake "${submission.inquiryId}" to service request "${newRequest.title}".`,
-        createdAt: new Date().toLocaleString(),
-      },
-      ...current,
-    ]);
+    const savedActivity = await logActivity({
+      type: "System",
+      message: `Converted intake "${submission.inquiryId}" to service request "${newRequest.title}".`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => [
+        {
+          id: savedActivity.id,
+          clientId: savedActivity.clientId ?? undefined,
+          projectId: savedActivity.projectId ?? undefined,
+          type: savedActivity.type,
+          message: savedActivity.message,
+          createdAt: savedActivity.createdAt,
+        },
+        ...current,
+      ]);
+    }
 
     setIntakeSubmissions((current) =>
       current.map((item) =>

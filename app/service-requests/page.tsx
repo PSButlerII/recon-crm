@@ -30,7 +30,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ServiceRequest, ServiceRequestStatus } from "@/types/service-request";
- 
+import { logActivity } from "@/lib/log-activity"; 
 
 export default function ServiceRequestsPage() {
   const [statusFilter, setStatusFilter] =
@@ -51,6 +51,7 @@ export default function ServiceRequestsPage() {
   projects,
   setProjects,
   clients,
+  setActivity
   } = useCrm();
   
   const [clientId, setClientId] = useState("");
@@ -113,7 +114,26 @@ export default function ServiceRequestsPage() {
 
   const projectData = await projectResponse.json();
   const savedProject = projectData.project;
+  const savedActivity = await logActivity({
+    clientId: savedProject.clientId ?? undefined,
+    projectId: savedProject.id,
+    type: "Project",
+    message: `Created project "${savedProject.name}" from service request.`,
+  });
 
+  if (savedActivity) {
+  setActivity((current) => [
+    {
+      id: savedActivity.id,
+      clientId: savedActivity.clientId ?? undefined,
+      projectId: savedActivity.projectId ?? undefined,
+      type: savedActivity.type,
+      message: savedActivity.message,
+      createdAt: savedActivity.createdAt,
+    },
+    ...current,
+  ]);
+}
   setProjects((current) => [
     {
       id: savedProject.id,

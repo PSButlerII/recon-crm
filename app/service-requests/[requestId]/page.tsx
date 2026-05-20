@@ -14,6 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { logActivity } from "@/lib/log-activity";
+
 
 type ServiceRequestDetailPageProps = {
   params: Promise<{
@@ -35,30 +37,30 @@ export default function ServiceRequestDetailPage({ params }: ServiceRequestDetai
   
   const { requestId } = use(params);
 
-const {
-  serviceRequests,
-  setServiceRequests,
-  projects,
-  setProjects,
-  setActivity,
-} = useCrm();
+  const {
+    serviceRequests,
+    setServiceRequests,
+    projects,
+    setProjects,
+    setActivity,
+  } = useCrm();
 
-const request = serviceRequests.find(
-  (item) => item.id === requestId
-);
-
-if (!request) {
-  return <div>Request not found.</div>;
-}
-
-const relatedProject = projects.find(
-  (project) => project.serviceRequestId === request.id
-);
-
-function handleConvertToProject() {
-  const currentRequest = serviceRequests.find(
+  const request = serviceRequests.find(
     (item) => item.id === requestId
   );
+
+  if (!request) {
+    return <div>Request not found.</div>;
+  }
+
+  const relatedProject = projects.find(
+    (project) => project.serviceRequestId === request.id
+  );
+
+  async function handleConvertToProject() {
+    const currentRequest = serviceRequests.find(
+      (item) => item.id === requestId
+    );
 
   if (!currentRequest) return;
 
@@ -76,27 +78,67 @@ function handleConvertToProject() {
     dueDate: "",
   };
 
-  setProjects((current) => [newProject, ...current]);
+  const projectResponse = await fetch("/api/projects", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newProject),
+  });
 
-  setServiceRequests((current) =>
-    current.map((item) =>
-      item.id === currentRequest.id
-        ? { ...item, status: "Converted" }
-        : item
-    )
-  );
+  if (!projectResponse.ok) {
+    console.error("Failed to persist project.");
+    return;
+  }
 
-  setActivity((current) => [
+  const projectData = await projectResponse.json();
+  const savedProject = projectData.project;
+
+  setProjects((current) => [
     {
-      id: crypto.randomUUID(),
-      clientId: newProject.clientId,
-      projectId: newProject.id,
-      type: "Project",
-      message: `Created project "${newProject.name}" from service request.`,
-      createdAt: new Date().toLocaleString(),
+      id: savedProject.id,
+      clientId: savedProject.clientId ?? undefined,
+      clientName: savedProject.clientName,
+      serviceRequestId: savedProject.serviceRequestId ?? undefined,
+      name: savedProject.name,
+      description: savedProject.description,
+      status: savedProject.status,
+      priority: savedProject.priority,
+      progress: savedProject.progress,
+      startDate: savedProject.startDate ?? undefined,
+      dueDate: savedProject.dueDate ?? undefined,
     },
     ...current,
   ]);
+
+    setServiceRequests((current) =>
+      current.map((item) =>
+        item.id === currentRequest.id
+          ? { ...item, status: "Converted" }
+          : item
+      )
+    );
+
+    const savedActivity = await logActivity({
+    clientId: savedProject.clientId ?? undefined,
+    projectId: savedProject.id,
+    type: "Project",
+    message: `Created project "${savedProject.name}" from service request.`,
+  });
+
+  if (savedActivity) {
+    setActivity((current) => [
+      {
+        id: savedActivity.id,
+        clientId: savedActivity.clientId ?? undefined,
+        projectId: savedActivity.projectId ?? undefined,
+        type: savedActivity.type,
+        message: savedActivity.message,
+        createdAt: savedActivity.createdAt,
+      },
+      ...current,
+    ]);
+  }
 }
 
   return (

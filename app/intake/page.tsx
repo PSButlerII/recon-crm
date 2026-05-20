@@ -126,7 +126,6 @@ async function loadIntake() {
    return () => window.clearInterval(interval);
 },[setIntakeSubmissions]);
 
-
   const [search, setSearch] = useState("");
 
   const [statusFilter, setStatusFilter] =
@@ -166,7 +165,36 @@ async function loadIntake() {
       status: "New" as const,
       requestedAt: submission.submittedAt,
     };
-    setServiceRequests((current) => [newRequest, ...current]);
+    const createResponse = await fetch("/api/service-requests", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newRequest),
+    });
+
+    if (!createResponse.ok) {
+      console.error("Failed to persist service request.");
+      return;
+    }
+
+    const createData = await createResponse.json();
+    const savedRequest = createData.serviceRequest;
+
+    setServiceRequests((current) => [
+      {
+        id: savedRequest.id,
+        intakeSubmissionId: savedRequest.intakeSubmissionId ?? undefined,
+        clientId: savedRequest.clientId ?? undefined,
+        clientName: savedRequest.clientName ?? undefined,
+        title: savedRequest.title,
+        description: savedRequest.description,
+        category: savedRequest.category,
+        status: savedRequest.status,
+        requestedAt: savedRequest.requestedAt,
+      },
+      ...current,
+    ]);
 
     setActivity((current) => [
       {

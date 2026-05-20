@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/table";
 import { PageActions } from "@/components/page-actions"
 import { SelectContent, SelectItem, SelectTrigger, SelectValue,Select } from "@/components/ui/select";
-import { useState } from "react";
 import type {
   Project,
   ProjectPriority,
@@ -38,7 +37,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCrm } from "@/context/crm-context";
-
+import { useEffect, useState } from "react";
 const statusVariants = {
   Planning: "secondary",
   Active: "default",
@@ -84,50 +83,122 @@ const matchesSearch =
 
 });
 
-function handleAddProject() {
-  const client = clients.find(
-    (client) => client.id === clientId
-  );
+  async function handleAddProject() {
+    const client = clients.find(
+      (client) => client.id === clientId
+    );
 
-  if (!client) return;
+    if (!client) return;
 
-  const newProject: Project = {
-    id: crypto.randomUUID(),
-    clientId,
-    clientName: client.name,
-    name,
-    description,
-    status,
-    priority,
-    progress: 0,
-    startDate,
-    dueDate,
-  };
-
-  setProjects((current) => [newProject, ...current]);
-
-  setActivity((current) => [
-    {
+    const newProject: Project = {
       id: crypto.randomUUID(),
-      clientId: newProject.clientId,
-      projectId: newProject.id,
-      type: "Project",
-      message: `Created project "${newProject.name}".`,
-      createdAt: new Date().toLocaleString(),
+      clientId,
+      clientName: client.name,
+      name,
+      description,
+      status,
+      priority,
+      progress: 0,
+      startDate,
+      dueDate,
+    };
+
+    const response = await fetch("/api/projects", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newProject),
+  });
+
+  if (!response.ok) {
+    console.error("Failed to persist project.");
+    return;
+  }
+
+  const data = await response.json();
+  const savedProject = data.project;
+
+  setProjects((current) => [
+    {
+      id: savedProject.id,
+      clientId: savedProject.clientId ?? undefined,
+      clientName: savedProject.clientName,
+      serviceRequestId: savedProject.serviceRequestId ?? undefined,
+      name: savedProject.name,
+      description: savedProject.description,
+      status: savedProject.status,
+      priority: savedProject.priority,
+      progress: savedProject.progress,
+      startDate: savedProject.startDate ?? undefined,
+      dueDate: savedProject.dueDate ?? undefined,
     },
     ...current,
   ]);
-  
-  setName("");
-  setClientId("");
-  setDescription("");
-  setStatus("Planning");
-  setPriority("Medium");
-  setStartDate("");
-  setDueDate("");
-  setSuccessMessage(`Project "${name}" was added.`);
-  setOpen(false);
-}
+
+    setActivity((current) => [
+      {
+        id: crypto.randomUUID(),
+        clientId: newProject.clientId,
+        projectId: newProject.id,
+        type: "Project",
+        message: `Created project "${newProject.name}".`,
+        createdAt: new Date().toLocaleString(),
+      },
+      ...current,
+    ]);
+    
+    setName("");
+    setClientId("");
+    setDescription("");
+    setStatus("Planning");
+    setPriority("Medium");
+    setStartDate("");
+    setDueDate("");
+    setSuccessMessage(`Project "${name}" was added.`);
+    setOpen(false);
+  }
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function loadProjects() {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/projects");
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Failed to load projects.");
+      }
+
+      const data = await response.json();
+
+      setProjects(
+        data.projects.map((item: any) => ({
+          id: item.id,
+          clientId: item.clientId ?? undefined,
+          clientName: item.clientName,
+          serviceRequestId: item.serviceRequestId ?? undefined,
+          name: item.name,
+          description: item.description,
+          status: item.status,
+          priority: item.priority,
+          progress: item.progress,
+          startDate: item.startDate ?? undefined,
+          dueDate: item.dueDate ?? undefined,
+        }))
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
   return (
     <>
@@ -162,6 +233,10 @@ function handleAddProject() {
             <SelectItem value="Cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
+
+        <Button variant="outline" onClick={loadProjects}>
+          {isLoading ? "Refreshing..." : "Refresh"}
+        </Button>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>

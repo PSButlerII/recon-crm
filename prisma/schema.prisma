@@ -49,3 +49,24 @@ model ServiceRequest {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
+
+model Project {
+  id               String   @id @default(cuid())
+
+  clientId         String?
+  clientName       String
+
+  serviceRequestId String?
+
+  name             String
+  description      String
+  status           String   @default("Planning")
+  priority         String   @default("Medium")
+  progress         Int      @default(0)
+
+  startDate        DateTime?
+  dueDate          DateTime?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

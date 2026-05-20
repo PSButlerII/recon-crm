@@ -78,7 +78,7 @@ export default function ServiceRequestsPage() {
     ) && matchesSearch;
   });
 
-  function handleConvertRequest() {
+  async function handleConvertRequest() {
     const request = serviceRequests.find(
       (request) => request.id === selectedRequestId
     );
@@ -99,13 +99,58 @@ export default function ServiceRequestsPage() {
     serviceRequestId: request.id,
   };
 
-  setProjects((current) => [newProject, ...current]);
+  const projectResponse = await fetch("/api/projects", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newProject),
+  });
+
+  if (!projectResponse.ok) {
+    console.error("Failed to persist project.");
+    return;
+  }
+
+  const projectData = await projectResponse.json();
+  const savedProject = projectData.project;
+
+  setProjects((current) => [
+    {
+      id: savedProject.id,
+      clientId: savedProject.clientId ?? undefined,
+      clientName: savedProject.clientName,
+      serviceRequestId: savedProject.serviceRequestId ?? undefined,
+      name: savedProject.name,
+      description: savedProject.description,
+      status: savedProject.status,
+      priority: savedProject.priority,
+      progress: savedProject.progress,
+      startDate: savedProject.startDate ?? undefined,
+      dueDate: savedProject.dueDate ?? undefined,
+    },
+    ...current,
+  ]);
 
   setServiceRequests((current) =>
     current.map((item) =>
       item.id === request.id ? { ...item, status: "Converted" } : item
     )
   );
+  const response = await fetch("/api/service-requests", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      id: request.id,
+      status: "Converted",
+    }),
+  });
+
+  if (!response.ok) {
+    console.error("Failed to persist service request status update.");
+  }
 
   setSelectedRequestId("");
   setPriority("Medium");
@@ -115,49 +160,49 @@ export default function ServiceRequestsPage() {
   }
 
   async function handleAddRequest() {
-  const client = clients.find((client) => client.id === clientId);
+    const client = clients.find((client) => client.id === clientId);
 
-  const newRequest: ServiceRequest = {
-    id: crypto.randomUUID(),
-    clientId: client?.id,
-    clientName: client?.name,
-    title,
-    description,
-    category,
-    status,
-    requestedAt: new Date().toISOString().split("T")[0],
-  };
+    const newRequest: ServiceRequest = {
+      id: crypto.randomUUID(),
+      clientId: client?.id,
+      clientName: client?.name,
+      title,
+      description,
+      category,
+      status,
+      requestedAt: new Date().toISOString().split("T")[0],
+    };
 
-  const response = await fetch("/api/service-requests", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(newRequest),
-});
+    const response = await fetch("/api/service-requests", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newRequest),
+  });
 
-if (!response.ok) {
-  console.error("Failed to persist service request.");
-  return;
-}
+  if (!response.ok) {
+    console.error("Failed to persist service request.");
+    return;
+  }
 
-const data = await response.json();
-const savedRequest = data.serviceRequest;
+  const data = await response.json();
+  const savedRequest = data.serviceRequest;
 
-setServiceRequests((current) => [
-  {
-    id: savedRequest.id,
-    intakeSubmissionId: savedRequest.intakeSubmissionId ?? undefined,
-    clientId: savedRequest.clientId ?? undefined,
-    clientName: savedRequest.clientName ?? undefined,
-    title: savedRequest.title,
-    description: savedRequest.description,
-    category: savedRequest.category,
-    status: savedRequest.status,
-    requestedAt: savedRequest.requestedAt,
-  },
-  ...current,
-]);
+  setServiceRequests((current) => [
+    {
+      id: savedRequest.id,
+      intakeSubmissionId: savedRequest.intakeSubmissionId ?? undefined,
+      clientId: savedRequest.clientId ?? undefined,
+      clientName: savedRequest.clientName ?? undefined,
+      title: savedRequest.title,
+      description: savedRequest.description,
+      category: savedRequest.category,
+      status: savedRequest.status,
+      requestedAt: savedRequest.requestedAt,
+    },
+    ...current,
+  ]);
 
   setTitle("");
   setDescription("");

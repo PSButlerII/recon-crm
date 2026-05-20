@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import { useCrm } from "@/context/crm-context";
-import type {
-  IntakeSubmission,
-  IntakeSubmissionStatus,
-} from "@/types/intake-submission";
+import type {  IntakeSubmissionStatus } from "@/types/intake-submission";
 import { PageActions } from "@/components/page-actions";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +27,6 @@ import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
-
 export default function IntakePage() {
   const statusVariants = {
   New: "secondary",
@@ -42,7 +38,6 @@ export default function IntakePage() {
   const {
     intakeSubmissions,
     setIntakeSubmissions,
-    serviceRequests,
     setServiceRequests,
     setActivity
   } = useCrm();

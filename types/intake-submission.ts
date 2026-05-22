@@ -13,6 +13,7 @@ export type IntakeSubmission = {
   source: string;
   name: string;
   email: string;
+  phone:string;
   company?: string;
 
   projectType: string;

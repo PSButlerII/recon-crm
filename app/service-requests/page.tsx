@@ -51,7 +51,8 @@ export default function ServiceRequestsPage() {
   projects,
   setProjects,
   clients,
-  setActivity
+  setActivity,
+  refreshCrmData
   } = useCrm();
   
   const [clientId, setClientId] = useState("");
@@ -156,6 +157,7 @@ export default function ServiceRequestsPage() {
       item.id === request.id ? { ...item, status: "Converted" } : item
     )
   );
+
   const response = await fetch("/api/service-requests", {
     method: "PATCH",
     headers: {
@@ -233,45 +235,48 @@ export default function ServiceRequestsPage() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  async function loadServiceRequests() {
-    setIsLoading(true);
+  // async function loadServiceRequests() {
+  //   setIsLoading(true);
 
-    try {
-      const response = await fetch("/api/service-requests");
+  //   try {
+  //     const response = await fetch("/api/service-requests");
       
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Failed to load service requests.");
-      }
-      const data = await response.json();
+  //     if (!response.ok) {
+  //       const text = await response.text();
+  //       throw new Error(text || "Failed to load service requests.");
+  //     }
+  //     const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to load service requests.");
-      }
+  //     if (!response.ok) {
+  //       throw new Error(data.error || "Failed to load service requests.");
+  //     }
 
-      setServiceRequests(
-        data.serviceRequests.map((item: any) => ({
-          id: item.id,
-          intakeSubmissionId: item.intakeSubmissionId ?? undefined,
-          clientId: item.clientId ?? undefined,
-          clientName: item.clientName ?? undefined,
-          title: item.title,
-          description: item.description,
-          category: item.category,
-          status: item.status,
-          requestedAt: item.requestedAt,
-        }))
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  //     setServiceRequests(
+  //       data.serviceRequests.map((item: any) => ({
+  //         id: item.id,
+  //         intakeSubmissionId: item.intakeSubmissionId ?? undefined,
+  //         clientId: item.clientId ?? undefined,
+  //         clientName: item.clientName ?? undefined,
+  //         title: item.title,
+  //         description: item.description,
+  //         category: item.category,
+  //         status: item.status,
+  //         requestedAt: item.requestedAt,
+  //       }))
+  //     );
+  //   } catch (error) {
+  //     console.error(error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }
 
-  useEffect(() => {
-    loadServiceRequests();
-  }, []);
+  // useEffect(() => {
+  //   loadServiceRequests();
+  // }, []);
+ 
+  refreshCrmData
+ 
   return (
     <>
       <PageActions>
@@ -302,7 +307,7 @@ export default function ServiceRequestsPage() {
             <SelectItem value="Converted">Converted</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" onClick={loadServiceRequests}>
+        <Button variant="outline" onClick={refreshCrmData}>
           {isLoading ? "Refreshing..." : "Refresh"}
         </Button>
 

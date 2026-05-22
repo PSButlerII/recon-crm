@@ -40,7 +40,7 @@ export default function TasksPage() {
   Done: "outline",
   } as const;
 
-  const { tasks, setTasks, projects,setActivity } = useCrm();
+  const { tasks, setTasks, projects,setActivity,refreshCrmData } = useCrm();
 
   const [open, setOpen] = useState(false);
   
@@ -150,44 +150,44 @@ export default function TasksPage() {
   }
   const [isLoading, setIsLoading] = useState(false);
 
-  async function loadTasks() {
-    setIsLoading(true);
+  // async function loadTasks() {
+  //   setIsLoading(true);
 
-    try {
-      const response = await fetch("/api/tasks");
+  //   try {
+  //     const response = await fetch("/api/tasks");
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Failed to load tasks.");
-      }
+  //     if (!response.ok) {
+  //       const text = await response.text();
+  //       throw new Error(text || "Failed to load tasks.");
+  //     }
 
-      const data = await response.json();
+  //     const data = await response.json();
 
-      setTasks(
-        data.tasks.map((item: any) => ({
-          id: item.id,
-          projectId: item.projectId,
-          projectName: item.projectName,
-          clientId: item.clientId ?? undefined,
-          clientName: item.clientName ?? undefined,
-          title: item.title,
-          description: item.description ?? undefined,
-          status: item.status,
-          priority: item.priority,
-          dueDate: item.dueDate ?? undefined,
-        }))
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  //     setTasks(
+  //       data.tasks.map((item: any) => ({
+  //         id: item.id,
+  //         projectId: item.projectId,
+  //         projectName: item.projectName,
+  //         clientId: item.clientId ?? undefined,
+  //         clientName: item.clientName ?? undefined,
+  //         title: item.title,
+  //         description: item.description ?? undefined,
+  //         status: item.status,
+  //         priority: item.priority,
+  //         dueDate: item.dueDate ?? undefined,
+  //       }))
+  //     );
+  //   } catch (error) {
+  //     console.error(error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }
 
-  useEffect(() => {
-    loadTasks();
-  }, []);
-
+  // useEffect(() => {
+  //   loadTasks();
+  // }, []);
+refreshCrmData
   return (
     <>
       <PageActions>
@@ -196,7 +196,7 @@ export default function TasksPage() {
           description="Track action items across clients and projects."
         />
         
-        <Button variant="outline" onClick={loadTasks}>
+        <Button variant="outline" onClick={refreshCrmData}>
           {isLoading ? "Refreshing..." : "Refresh"}
         </Button>
 

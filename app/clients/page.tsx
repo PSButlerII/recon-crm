@@ -50,12 +50,14 @@ export default function ClientsPage() {
   Paused: "outline",
   Archived: "destructive",
 } as const;
+
   const { clients, setClients, setActivity } = useCrm();
   const [open, setOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone]= useState("");
   const [status, setStatus] = useState<ClientStatus>("Lead");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | ClientStatus>("All");
@@ -78,12 +80,14 @@ export default function ClientsPage() {
       name,
       contactName,
       email,
+      phone,
       status,
       projectCount: 0,
       lastContacted: new Date().toISOString().split("T")[0],
     };
 
     setClients((current) => [newClient, ...current]);
+
     setActivity((current) => [
       {
         id: crypto.randomUUID(),
@@ -98,6 +102,7 @@ export default function ClientsPage() {
     setName("");
     setContactName("");
     setEmail("");
+    setPhone("");
     setStatus("Lead");
     setOpen(false);
   }
@@ -167,6 +172,15 @@ export default function ClientsPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Phone Number</Label>
+                <Input
+                  type="phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                 />
               </div>
 

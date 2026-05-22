@@ -20,7 +20,7 @@ export default function NotesPage() {
     const [search, setSearch] = useState("");
     const [typeFilter, setTypeFilter] = useState<"All" | NoteType>("All");
 
-    const { notes, setNotes,clients,projects, setActivity } = useCrm();
+    const { notes, setNotes,clients,projects, setActivity,refreshCrmData } = useCrm();
 
     const [open, setOpen] = useState(false);
     const [title, setTitle] = useState("");
@@ -112,40 +112,42 @@ export default function NotesPage() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  async function loadNotes() {
-    setIsLoading(true);
+  // async function loadNotes() {
+  //   setIsLoading(true);
 
-    try {
-      const response = await fetch("/api/notes");
+  //   try {
+  //     const response = await fetch("/api/notes");
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Failed to load notes.");
-      }
+  //     if (!response.ok) {
+  //       const text = await response.text();
+  //       throw new Error(text || "Failed to load notes.");
+  //     }
 
-      const data = await response.json();
+  //     const data = await response.json();
 
-      setNotes(
-        data.notes.map((item: any) => ({
-          id: item.id,
-          clientId: item.clientId ?? undefined,
-          projectId: item.projectId ?? undefined,
-          title: item.title,
-          body: item.body,
-          type: item.type,
-          createdAt: item.createdAt,
-        }))
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  //     setNotes(
+  //       data.notes.map((item: any) => ({
+  //         id: item.id,
+  //         clientId: item.clientId ?? undefined,
+  //         projectId: item.projectId ?? undefined,
+  //         title: item.title,
+  //         body: item.body,
+  //         type: item.type,
+  //         createdAt: item.createdAt,
+  //       }))
+  //     );
+  //   } catch (error) {
+  //     console.error(error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }
 
-  useEffect(() => {
-    loadNotes();
-  }, []);
+  // useEffect(() => {
+  //   loadNotes();
+  // }, []);
+
+  refreshCrmData
 
   return (
     <>
@@ -155,7 +157,7 @@ export default function NotesPage() {
           description="Capture calls, decisions, reminders, research, and project context."
         />
 
-        <Button variant="outline" onClick={loadNotes}>
+        <Button variant="outline" onClick={refreshCrmData}>
           {isLoading ? "Refreshing..." : "Refresh"}
         </Button>
 

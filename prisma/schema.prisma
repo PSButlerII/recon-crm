@@ -18,6 +18,7 @@ model IntakeSubmission {
   source           String
   name             String
   email            String
+  phone            String?
   company          String?
   projectType      String
   goal             String

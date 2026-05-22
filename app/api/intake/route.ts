@@ -6,6 +6,7 @@ type WebsiteInquiryPayload = {
   source: string;
   name: string;
   email: string;
+  phone:string;
   company?: string;
   projectType: string;
   goal: string;
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
       !payload.source ||
       !payload.name ||
       !payload.email ||
+      !payload.phone||
       !payload.projectType ||
       !payload.goal ||
       !payload.submittedAt
@@ -61,6 +63,7 @@ export async function POST(request: Request) {
         source: payload.source,
         name: payload.name,
         email: payload.email,
+        phoneNumber:payload.phone,
         company: payload.company,
         projectType: payload.projectType,
         goal: payload.goal,

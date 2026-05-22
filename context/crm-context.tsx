@@ -1,8 +1,8 @@
 "use client";
-
 import {
   createContext,
   useContext,
+  useEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -46,6 +46,9 @@ type CrmContextType = {
 
   invoices: Invoice[];
   setInvoices: React.Dispatch<React.SetStateAction<Invoice[]>>;
+
+  isLoadingCrm: boolean;
+  refreshCrmData: () => Promise<void>;
 };
 
 const CrmContext = createContext<CrmContextType | undefined>(undefined);
@@ -61,7 +64,78 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   const [intakeSubmissions, setIntakeSubmissions] = useState<IntakeSubmission[]>([]);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoadingCrm, setIsLoadingCrm] = useState(false);
 
+  async function refreshCrmData() {
+    setIsLoadingCrm(true);
+
+    try {
+      const [
+        intakeResponse,
+        requestsResponse,
+        projectsResponse,
+        tasksResponse,
+        notesResponse,
+        activityResponse,
+      ] = await Promise.all([
+        fetch("/api/intake"),
+        fetch("/api/service-requests"),
+        fetch("/api/projects"),
+        fetch("/api/tasks"),
+        fetch("/api/notes"),
+        fetch("/api/activity"),
+      ]);
+
+      const [
+        intakeData,
+        requestsData,
+        projectsData,
+        tasksData,
+        notesData,
+        activityData,
+      ] = await Promise.all([
+        intakeResponse.json(),
+        requestsResponse.json(),
+        projectsResponse.json(),
+        tasksResponse.json(),
+        notesResponse.json(),
+        activityResponse.json(),
+      ]);
+
+      if (intakeData.submissions) {
+        setIntakeSubmissions(intakeData.submissions);
+      }
+
+      if (requestsData.serviceRequests) {
+        setServiceRequests(requestsData.serviceRequests);
+      }
+
+      if (projectsData.projects) {
+        setProjects(projectsData.projects);
+      }
+
+      if (tasksData.tasks) {
+        setTasks(tasksData.tasks);
+      }
+
+      if (notesData.notes) {
+        setNotes(notesData.notes);
+      }
+
+      if (activityData.activity) {
+        setActivity(activityData.activity);
+      }
+      } catch (error) {
+        console.error("Failed to refresh CRM data:", error);
+      } finally {
+        setIsLoadingCrm(false);
+      }
+  }
+
+  useEffect(() => {
+    refreshCrmData();
+  }, []);
+  
   return (
     <CrmContext.Provider
       value={{
@@ -85,6 +159,8 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         setQuotes,
         invoices,
         setInvoices,
+        isLoadingCrm,
+        refreshCrmData,
       }}
     >
       {children}

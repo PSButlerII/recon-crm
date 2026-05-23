@@ -39,11 +39,17 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
     setIntakeSubmissions,
     setServiceRequests,
     setActivity,
+    isLoadingCrm
   } = useCrm();
 
   const submission = intakeSubmissions.find(
     (item) => item.id === submissionId
   );
+
+
+  if(isLoadingCrm){
+    return <div>Loading intake submissions...</div>
+  }
 
   if (!submission) {
     return <div>Submission not found.</div>;

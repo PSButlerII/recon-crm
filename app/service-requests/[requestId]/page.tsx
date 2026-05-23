@@ -43,15 +43,21 @@ export default function ServiceRequestDetailPage({ params }: ServiceRequestDetai
     projects,
     setProjects,
     setActivity,
+    isLoadingCrm
   } = useCrm();
 
   const request = serviceRequests.find(
     (item) => item.id === requestId
   );
 
+  if(isLoadingCrm){
+    return <div>Loading requests...</div>
+  }
+  
   if (!request) {
     return <div>Request not found.</div>;
   }
+
 
   const relatedProject = projects.find(
     (project) => project.serviceRequestId === request.id

@@ -40,7 +40,7 @@ import {
 import Link from "next/link";
 import { PageActions } from "@/components/page-actions";
 import { useCrm } from "@/context/crm-context";
-
+import { logActivity } from "@/lib/log-activity";
 
 
 export default function ClientsPage() {
@@ -74,7 +74,7 @@ export default function ClientsPage() {
   return matchesSearch && matchesStatus;
 });
 
-  function handleAddClient() {
+  async function handleAddClient() {
     const newClient: Client = {
       id: crypto.randomUUID(),
       name,
@@ -86,18 +86,55 @@ export default function ClientsPage() {
       lastContacted: new Date().toISOString().split("T")[0],
     };
 
-    setClients((current) => [newClient, ...current]);
+    const response = await fetch("/api/clients", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newClient),
+    });
 
-    setActivity((current) => [
+    if (!response.ok) {
+      console.error("Failed to persist client.");
+      return;
+    }
+
+    const data = await response.json();
+    const savedClient = data.client;
+
+    setClients((current) => [
       {
-        id: crypto.randomUUID(),
-        clientId: newClient.id,
-        type: "Client",
-        message: `Created client "${newClient.name}".`,
-        createdAt: new Date().toLocaleString(),
+        id: savedClient.id,
+        name: savedClient.name,
+        contactName: savedClient.contactName,
+        email: savedClient.email,
+        phone: savedClient.phone ?? undefined,
+        status: savedClient.status,
+        projectCount: savedClient.projectCount,
+        lastContacted: savedClient.lastContacted ?? undefined,
       },
       ...current,
     ]);
+
+    const savedActivity = await logActivity({
+      clientId: savedClient.id,
+      type: "Client",
+      message: `Created client "${savedClient.name}".`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => [
+        {
+          id: savedActivity.id,
+          clientId: savedActivity.clientId ?? undefined,
+          projectId: savedActivity.projectId ?? undefined,
+          type: savedActivity.type,
+          message: savedActivity.message,
+          createdAt: savedActivity.createdAt,
+        },
+        ...current,
+      ]);
+    }
 
     setName("");
     setContactName("");

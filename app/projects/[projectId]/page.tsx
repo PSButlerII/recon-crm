@@ -60,16 +60,21 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     invoices,
     serviceRequests,
     setTasks,
-    setProjects
+    setProjects,
+    isLoadingCrm
     } = useCrm();
 
   const { projectId } = use(params);
   const project = projects.find((item) => item.id === projectId);
 
+  if (isLoadingCrm) {
+    return <div>Loading project...</div>;
+  }
+  
   if (!project) {
     return <div>Project not found.</div>;
   }
-
+  
   const projectTasks = tasks.filter((task) => task.projectId === projectId);
   const openTasks = projectTasks.filter((task) => task.status !== "Done");
 

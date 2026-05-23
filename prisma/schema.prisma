@@ -116,3 +116,19 @@ model ActivityLog {
 
   createdAt DateTime @default(now())
 }
+
+model Client {
+  id            String   @id @default(cuid())
+
+  name          String
+  contactName   String
+  email         String
+  phone         String?
+  status        String   @default("Lead")
+
+  projectCount  Int      @default(0)
+  lastContacted DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

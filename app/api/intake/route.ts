@@ -63,7 +63,7 @@ export async function POST(request: Request) {
         source: payload.source,
         name: payload.name,
         email: payload.email,
-        phoneNumber:payload.phone,
+        phone:payload.phone,
         company: payload.company,
         projectType: payload.projectType,
         goal: payload.goal,

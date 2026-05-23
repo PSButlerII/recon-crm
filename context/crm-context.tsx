@@ -71,6 +71,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
 
     try {
       const [
+        clientsResponse,
         intakeResponse,
         requestsResponse,
         projectsResponse,
@@ -78,6 +79,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         notesResponse,
         activityResponse,
       ] = await Promise.all([
+        fetch("/api/clients"),
         fetch("/api/intake"),
         fetch("/api/service-requests"),
         fetch("/api/projects"),
@@ -87,6 +89,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       ]);
 
       const [
+        clientsData,
         intakeData,
         requestsData,
         projectsData,
@@ -94,6 +97,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         notesData,
         activityData,
       ] = await Promise.all([
+        clientsResponse.json(),
         intakeResponse.json(),
         requestsResponse.json(),
         projectsResponse.json(),
@@ -102,6 +106,10 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         activityResponse.json(),
       ]);
 
+      if (clientsData.clients) {
+        setClients(clientsData.clients);
+      }
+      
       if (intakeData.submissions) {
         setIntakeSubmissions(intakeData.submissions);
       }

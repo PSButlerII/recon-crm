@@ -39,9 +39,14 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
   activity,
   quotes,
   invoices,
+  isLoadingCrm
 } = useCrm();
 
   const client = clients.find((item) => item.id === clientId);
+
+  if(isLoadingCrm){
+    return <div>Loading clients...</div>
+  }
 
   if (!client) {
     return <div>Client not found.</div>;

@@ -1,21 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-type CreateQuotePayload = {
+type CreateInvoicePayload = {
+  quoteId?: string;
   clientId?: string;
   clientName: string;
   projectId?: string;
   projectName?: string;
   title: string;
-  status?: "Draft" | "Sent" | "Accepted" | "Declined";
+  status?: "Draft" | "Sent" | "Paid" | "Overdue";
   amount?: number;
   issuedDate?: string | null;
-  validUntil?: string;
+  dueDate?: string | null;
+  paidDate?: string | null;
 };
 
 export async function GET() {
   try {
-    const quotes = await prisma.quote.findMany({
+    const invoices = await prisma.invoice.findMany({
       orderBy: {
         createdAt: "desc",
       },
@@ -23,13 +25,13 @@ export async function GET() {
 
     return NextResponse.json({
       ok: true,
-      quotes,
+      invoices,
     });
   } catch (error) {
-    console.error("Quote GET error:", error);
+    console.error("Invoice GET error:", error);
 
     return NextResponse.json(
-      { error: "Failed to load quotes." },
+      { error: "Failed to load invoices." },
       { status: 500 }
     );
   }
@@ -37,17 +39,18 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const payload = (await request.json()) as CreateQuotePayload;
+    const payload = (await request.json()) as CreateInvoicePayload;
 
     if (!payload.clientName || !payload.title) {
       return NextResponse.json(
-        { error: "Missing required quote fields." },
+        { error: "Missing required invoice fields." },
         { status: 400 }
       );
     }
 
-    const quote = await prisma.quote.create({
+    const invoice = await prisma.invoice.create({
       data: {
+        quoteId: payload.quoteId,
         clientId: payload.clientId,
         clientName: payload.clientName,
         projectId: payload.projectId,
@@ -56,22 +59,23 @@ export async function POST(request: Request) {
         status: payload.status ?? "Draft",
         amount: payload.amount ?? 0,
         issuedDate: payload.issuedDate ? new Date(payload.issuedDate) : null,
-        validUntil: payload.validUntil ? new Date(payload.validUntil) : null,
+        dueDate: payload.dueDate ? new Date(payload.dueDate) : null,
+        paidDate: payload.paidDate ? new Date(payload.paidDate) : null,
       },
     });
 
     return NextResponse.json(
       {
         ok: true,
-        quote,
+        invoice,
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Quote POST error:", error);
+    console.error("Invoice POST error:", error);
 
     return NextResponse.json(
-      { error: "Failed to create quote." },
+      { error: "Failed to create invoice." },
       { status: 500 }
     );
   }
@@ -81,38 +85,46 @@ export async function PATCH(request: Request) {
   try {
     const body = await request.json();
 
-    const { id, status, issuedDate  } = body as {
+    const { id, status, issuedDate, dueDate, paidDate } = body as {
       id?: string;
-      status?: "Draft" | "Sent" | "Accepted" | "Declined";
+      status?: "Draft" | "Sent" | "Paid" | "Overdue";
       issuedDate?: string | null;
+      dueDate?: string | null;
+      paidDate?: string | null;
     };
 
-    if (!id || !status) {
+    if (!id) {
       return NextResponse.json(
-        { error: "Missing quote id or status." },
+        { error: "Missing invoice id." },
         { status: 400 }
       );
     }
 
-    const quote = await prisma.quote.update({
-    where: { id },
-    data: {
+    const invoice = await prisma.invoice.update({
+      where: { id },
+      data: {
         ...(status ? { status } : {}),
         ...(issuedDate !== undefined
-        ? { issuedDate: issuedDate ? new Date(issuedDate) : null }
-        : {}),
-        },
+          ? { issuedDate: issuedDate ? new Date(issuedDate) : null }
+          : {}),
+        ...(dueDate !== undefined
+          ? { dueDate: dueDate ? new Date(dueDate) : null }
+          : {}),
+        ...(paidDate !== undefined
+          ? { paidDate: paidDate ? new Date(paidDate) : null }
+          : {}),
+      },
     });
 
     return NextResponse.json({
       ok: true,
-      quote,
+      invoice,
     });
   } catch (error) {
-    console.error("Quote PATCH error:", error);
+    console.error("Invoice PATCH error:", error);
 
     return NextResponse.json(
-      { error: "Failed to update quote." },
+      { error: "Failed to update invoice." },
       { status: 500 }
     );
   }

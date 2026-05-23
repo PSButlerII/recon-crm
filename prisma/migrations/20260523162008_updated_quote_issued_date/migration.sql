@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Quote" ALTER COLUMN "issuedDate" DROP NOT NULL,
+ALTER COLUMN "issuedDate" DROP DEFAULT;

@@ -15,7 +15,7 @@ export type Quote = {
   title: string;
   amount: number;
   status: BillingStatus;
-  issuedDate: string;
+  issuedDate?: string;
   validUntil?: string;
 };
 

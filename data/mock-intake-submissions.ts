@@ -7,6 +7,7 @@ export const mockIntakeSubmissions: IntakeSubmission[] = [
   source: "Recon Dev Website",
   name: "Example Owner",
   email: "owner@example.com",
+  phone: "494857690",
   company: "Example Startup",
   projectType: "Web Development",
   goal: "Build a simple business website.",

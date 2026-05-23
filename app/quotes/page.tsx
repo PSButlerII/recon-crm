@@ -22,7 +22,6 @@ import {
 import { PageActions } from "@/components/page-actions";
 import { useState } from "react";
 import { useCrm } from "@/context/crm-context";
-import type { Quote } from "@/types/billing";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -40,11 +39,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { logActivity } from "@/lib/log-activity";
 
 export default function QuotesPage() {
   
-  const { quotes, setQuotes, clients, projects } = useCrm();
+  const { quotes, setQuotes, clients, projects,setActivity,setInvoices  } = useCrm();
 
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState("");
@@ -52,12 +51,12 @@ export default function QuotesPage() {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [validUntil, setValidUntil] = useState("");
-  const [issuedDate, setIssuedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [issuedDate, setIssuedDate] = useState("");
 
 
   async function handleCreateQuote() {
     const client = clients.find((client) => client.id === clientId);
-    const project = projects.find((project) => project.id === projectId);
+    const project = projects.find((project) => project.id === projectId && project.clientId===clientId);
 
     if (!client || !title) return;
 
@@ -68,8 +67,7 @@ export default function QuotesPage() {
       projectName: project?.name,
       title,
       status: "Draft" as const,
-      amount: Number(amount || 0),
-      issuedDate,
+      amount: Number(amount || 0),      
       validUntil,
     };
 
@@ -99,19 +97,221 @@ export default function QuotesPage() {
         title: savedQuote.title,
         status: savedQuote.status,
         amount: savedQuote.amount,
-        issuedDate: savedQuote.issuedDate,
+        issuedDate: savedQuote.issuedDate ?? undefined,
         validUntil: savedQuote.validUntil ?? undefined,        
       },
       ...current,
     ]);
 
+    const savedActivity = await logActivity({
+      clientId: savedQuote.clientId ?? undefined,
+      projectId: savedQuote.projectId ?? undefined,
+      type: "System",
+      message: `Created quote "${savedQuote.title}" as a draft.`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => [
+        {
+          id: savedActivity.id,
+          clientId: savedActivity.clientId ?? undefined,
+          projectId: savedActivity.projectId ?? undefined,
+          type: savedActivity.type,
+          message: savedActivity.message,
+          createdAt: savedActivity.createdAt,
+        },
+        ...current,
+    ]);
+  }
+
     setClientId("");
     setProjectId("");
     setTitle("");
     setAmount("");
-    setValidUntil("");
-    setIssuedDate(new Date().toISOString().split("T")[0]);
+    setValidUntil("");    
     setOpen(false);
+  }
+
+  async function handleMarkSent(quoteId: string) {
+    const response = await fetch("/api/quotes", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: quoteId,
+        status: "Sent",
+        issuedDate: new Date().toISOString(),
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to mark quote as sent.");
+      return;
+    }
+
+    const data = await response.json();
+    const updatedQuote = data.quote;
+
+    setQuotes((current) =>
+      current.map((quote) =>
+        quote.id === updatedQuote.id
+          ? {
+              ...quote,
+              status: updatedQuote.status,
+              issuedDate: updatedQuote.issuedDate ?? undefined,
+            }
+          : quote
+      )
+    );
+      const savedActivity = await logActivity({
+        clientId: updatedQuote.clientId ?? undefined,
+        projectId: updatedQuote.projectId ?? undefined,
+        type: "System",
+        message: `Marked quote "${updatedQuote.title}" as sent.`,
+      });
+
+      if (savedActivity) {
+        setActivity((current) => [
+          {
+            id: savedActivity.id,
+            clientId: savedActivity.clientId ?? undefined,
+            projectId: savedActivity.projectId ?? undefined,
+            type: savedActivity.type,
+            message: savedActivity.message,
+            createdAt: savedActivity.createdAt,
+          },
+          ...current,
+        ]);
+      }
+  }
+
+  async function handleUpdateQuoteStatus(
+    quoteId: string,
+    status: "Accepted" | "Declined"
+    ) {
+    const response = await fetch("/api/quotes", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: quoteId,
+        status,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to update quote.");
+      return;
+    }
+
+    const data = await response.json();
+    const updatedQuote = data.quote;
+
+    setQuotes((current) =>
+    current.map((quote) =>
+    quote.id === updatedQuote.id
+      ? {
+          ...quote,
+          status: updatedQuote.status,
+        }
+      : quote
+  )
+);
+
+  const savedActivity = await logActivity({
+    clientId: updatedQuote.clientId ?? undefined,
+    projectId: updatedQuote.projectId ?? undefined,
+    type: "System",
+    message: `Marked quote "${updatedQuote.title}" as ${updatedQuote.status}.`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => [
+        {
+          id: savedActivity.id,
+          clientId: savedActivity.clientId ?? undefined,
+          projectId: savedActivity.projectId ?? undefined,
+          type: savedActivity.type,
+          message: savedActivity.message,
+          createdAt: savedActivity.createdAt,
+        },
+        ...current,
+      ]);
+    }
+  }
+
+  async function handleConvertToInvoice(quoteId: string) {
+    const quote = quotes.find((quote) => quote.id === quoteId);
+
+    if (!quote || quote.status !== "Accepted") return;
+
+    const newInvoice = {
+      quoteId: quote.id,
+      clientId: quote.clientId,
+      clientName: quote.clientName,
+      projectId: quote.projectId,
+      projectName: quote.projectName,
+      title: quote.title.replace("Quote", "Invoice"),
+      status: "Draft" as const,
+      amount: quote.amount,
+    };
+
+    const response = await fetch("/api/invoices", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newInvoice),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to create invoice from quote.");
+      return;
+    }
+
+    const data = await response.json();
+    const savedInvoice = data.invoice;
+
+    setInvoices((current) => [
+      {
+        id: savedInvoice.id,
+        quoteId: savedInvoice.quoteId ?? undefined,
+        clientId: savedInvoice.clientId ?? undefined,
+        clientName: savedInvoice.clientName,
+        projectId: savedInvoice.projectId ?? undefined,
+        projectName: savedInvoice.projectName ?? undefined,
+        title: savedInvoice.title,
+        status: savedInvoice.status,
+        amount: savedInvoice.amount,
+        issuedDate: savedInvoice.issuedDate ?? undefined,
+        dueDate: savedInvoice.dueDate ?? undefined,
+        paidDate: savedInvoice.paidDate ?? undefined,
+      },
+      ...current,
+    ]);
+
+    const savedActivity = await logActivity({
+      clientId: savedInvoice.clientId ?? undefined,
+      projectId: savedInvoice.projectId ?? undefined,
+      type: "System",
+      message: `Created invoice "${savedInvoice.title}" from accepted quote.`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => [
+        {
+          id: savedActivity.id,
+          clientId: savedActivity.clientId ?? undefined,
+          projectId: savedActivity.projectId ?? undefined,
+          type: savedActivity.type,
+          message: savedActivity.message,
+          createdAt: savedActivity.createdAt,
+        },
+        ...current,
+      ]);
+    }
   }
 
   const money = new Intl.NumberFormat("en-US", {
@@ -163,11 +363,13 @@ export default function QuotesPage() {
                   </SelectTrigger>
 
                   <SelectContent>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
+                    {projects
+                      .filter((project) => project.clientId === clientId)
+                      .map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -262,12 +464,56 @@ export default function QuotesPage() {
                   </TableCell>
 
                   <TableCell>
-                    <Badge variant="outline">{quote.status}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{quote.status}</Badge>
+
+                      {quote.status === "Draft" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleMarkSent(quote.id)}
+                        >
+                          Mark Sent
+                        </Button>
+                      )}
+                      {quote.status === "Sent" && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            handleUpdateQuoteStatus(quote.id, "Accepted")
+                          }
+                        >
+                          Accept
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() =>
+                            handleUpdateQuoteStatus(quote.id, "Declined")
+                          }
+                        >
+                          Decline
+                        </Button>
+                        
+                      </>
+                      )}
+                      {quote.status === "Accepted" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleConvertToInvoice(quote.id)}
+                        >
+                          Create Invoice
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
 
                   <TableCell>{money.format(quote.amount)}</TableCell>
                   <TableCell>{quote.validUntil ?? "—"}</TableCell>
-                  <TableCell>{quote.issuedDate ?? "-"}</TableCell>
+                  <TableCell>{quote.issuedDate ?? "—"}</TableCell>
 
                 </TableRow>
               ))}

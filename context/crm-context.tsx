@@ -85,6 +85,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         notesResponse,
         activityResponse,
         quotesResponse,
+        invoicesResponse,
       ] = await Promise.all([
         fetch("/api/settings"),
         fetch("/api/clients"),
@@ -95,6 +96,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         fetch("/api/notes"),
         fetch("/api/activity"),
         fetch("/api/quotes"),
+        fetch("/api/invoices"),
       ]);
 
       const [
@@ -107,6 +109,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         notesData,
         activityData,
         quotesData,
+        invoicesData,
       ] = await Promise.all([
         settingsResponse.json(),
         clientsResponse.json(),
@@ -117,7 +120,12 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         notesResponse.json(),
         activityResponse.json(),
         quotesResponse.json(),
+        invoicesResponse.json(),
       ]);
+
+      if (invoicesData.invoices) {
+        setInvoices(invoicesData.invoices);
+      }
 
       if (settingsData.settings) {
         setSettings(settingsData.settings);

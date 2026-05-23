@@ -84,6 +84,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksResponse,
         notesResponse,
         activityResponse,
+        quotesResponse,
       ] = await Promise.all([
         fetch("/api/settings"),
         fetch("/api/clients"),
@@ -93,6 +94,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         fetch("/api/tasks"),
         fetch("/api/notes"),
         fetch("/api/activity"),
+        fetch("/api/quotes"),
       ]);
 
       const [
@@ -104,6 +106,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksData,
         notesData,
         activityData,
+        quotesData,
       ] = await Promise.all([
         settingsResponse.json(),
         clientsResponse.json(),
@@ -113,6 +116,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksResponse.json(),
         notesResponse.json(),
         activityResponse.json(),
+        quotesResponse.json(),
       ]);
 
       if (settingsData.settings) {
@@ -146,6 +150,11 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       if (activityData.activity) {
         setActivity(activityData.activity);
       }
+
+      if (quotesData.quotes) {
+        setQuotes(quotesData.quotes);
+      }
+      
       } catch (error) {
         console.error("Failed to refresh CRM data:", error);
       } finally {

@@ -1,3 +1,5 @@
+"use client"
+
 import { PageHeader } from "@/components/page-header";
 import {
   Card,
@@ -8,8 +10,64 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCrm } from "@/context/crm-context";
+import { useState,useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
+  const { settings, setSettings, refreshCrmData } = useCrm();
+
+  const [businessName, setBusinessName] = useState(
+    settings?.businessName ?? "Recon Dev LLC"
+  );
+  const [defaultEmail, setDefaultEmail] = useState(
+    settings?.defaultEmail ?? ""
+  );
+  const [defaultHourlyRate, setDefaultHourlyRate] = useState(
+    settings?.defaultHourlyRate?.toString() ?? "35"
+  );
+  const [defaultCurrency, setDefaultCurrency] = useState(
+    settings?.defaultCurrency ?? "USD"
+  );
+  const [paymentTerms, setPaymentTerms] = useState(
+    settings?.paymentTerms ?? "Due on receipt"
+  );
+
+  useEffect(() => {
+    if (!settings) return;
+
+    setBusinessName(settings.businessName);
+    setDefaultEmail(settings.defaultEmail ?? "");
+    setDefaultHourlyRate(settings.defaultHourlyRate.toString());
+    setDefaultCurrency(settings.defaultCurrency);
+    setPaymentTerms(settings.paymentTerms);
+  }, [settings]);
+
+  async function handleSaveSettings() {
+    const response = await fetch("/api/settings", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        businessName,
+        defaultEmail,
+        defaultHourlyRate: Number(defaultHourlyRate),
+        defaultCurrency,
+        paymentTerms,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to save settings.");
+      return;
+    }
+
+    const data = await response.json();
+    setSettings(data.settings);
+    await refreshCrmData();
+  }
+
   return (
     <>
       <PageHeader
@@ -29,18 +87,47 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Business Name</Label>
-              <Input defaultValue="Recon Dev LLC" />
+              <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label>Default Email</Label>
-              <Input placeholder="you@example.com" />
+              <Input value={defaultEmail} onChange={(e) => setDefaultEmail(e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label>Default Hourly Rate</Label>
-              <Input defaultValue="35" />
+              <Input
+                value={defaultHourlyRate}
+                onChange={(e) => setDefaultHourlyRate(e.target.value)}
+              />
             </div>
+
+            <div className="space-y-s">
+              <label>Currency</label>
+              <input
+              value={defaultCurrency}
+              onChange={(e)=> setDefaultCurrency(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-s">
+              <label>Payment Terms</label>
+              <input
+              value={paymentTerms}
+              onChange={(e)=> setPaymentTerms(e.target.value)}
+              />
+            </div>
+
+            <div></div>
+
+            <Button onClick={handleSaveSettings}>Save Settings</Button>
+
+
+
+
+
+
           </CardContent>
         </Card>
 

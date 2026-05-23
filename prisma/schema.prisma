@@ -145,3 +145,23 @@ model AppSettings {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
+
+model Quote {
+  id         String   @id @default(cuid())
+
+  clientId   String?
+  clientName String
+
+  projectId   String?
+  projectName String?
+
+  title      String
+  status     String   @default("Draft")
+  amount     Float    @default(0)
+
+  issuedDate DateTime @default(now())
+  validUntil DateTime?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

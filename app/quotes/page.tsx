@@ -1,6 +1,7 @@
+"use client"
+
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { mockQuotes } from "@/data/mock-billing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,9 +20,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageActions } from "@/components/page-actions";
+import { useCrm } from "@/context/crm-context";
 
 
 export default function QuotesPage() {
+  
+  const{
+    quotes
+  }=useCrm();
+
   const money = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -36,6 +43,7 @@ export default function QuotesPage() {
         />
 
         <Button>Create Quote</Button>
+        
       </PageActions>
 
       <Card>
@@ -58,7 +66,7 @@ export default function QuotesPage() {
             </TableHeader>
 
             <TableBody>
-              {mockQuotes.map((quote) => (
+              {quotes.map((quote) => (
                 <TableRow key={quote.id}>
                   <TableCell className="font-medium">{quote.title}</TableCell>
 

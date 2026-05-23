@@ -15,6 +15,7 @@ import type { IntakeSubmission } from "@/types/intake-submission";
 import type { FileRecord } from "@/types/file-record";
 import type { Activity } from "@/types/activity";
 import type { Quote, Invoice } from "@/types/billing";
+import type { AppSettings } from "@/types/settings";
 
 type CrmContextType = {
   clients: Client[];
@@ -33,8 +34,8 @@ type CrmContextType = {
   setServiceRequests: React.Dispatch<React.SetStateAction<ServiceRequest[]>>;
 
   intakeSubmissions: IntakeSubmission[];
-  setIntakeSubmissions: React.Dispatch<React.SetStateAction<IntakeSubmission[]>
->;
+  setIntakeSubmissions: React.Dispatch<React.SetStateAction<IntakeSubmission[]>>;
+
   files: FileRecord[];
   setFiles: React.Dispatch<React.SetStateAction<FileRecord[]>>;
 
@@ -49,6 +50,9 @@ type CrmContextType = {
 
   isLoadingCrm: boolean;
   refreshCrmData: () => Promise<void>;
+
+  settings: AppSettings | null;
+  setSettings: React.Dispatch<React.SetStateAction<AppSettings | null>>;
 };
 
 const CrmContext = createContext<CrmContextType | undefined>(undefined);
@@ -65,12 +69,14 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoadingCrm, setIsLoadingCrm] = useState(false);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
 
   async function refreshCrmData() {
     setIsLoadingCrm(true);
 
     try {
       const [
+        settingsResponse,
         clientsResponse,
         intakeResponse,
         requestsResponse,
@@ -79,6 +85,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         notesResponse,
         activityResponse,
       ] = await Promise.all([
+        fetch("/api/settings"),
         fetch("/api/clients"),
         fetch("/api/intake"),
         fetch("/api/service-requests"),
@@ -89,6 +96,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       ]);
 
       const [
+        settingsData,
         clientsData,
         intakeData,
         requestsData,
@@ -97,6 +105,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         notesData,
         activityData,
       ] = await Promise.all([
+        settingsResponse.json(),
         clientsResponse.json(),
         intakeResponse.json(),
         requestsResponse.json(),
@@ -106,6 +115,10 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         activityResponse.json(),
       ]);
 
+      if (settingsData.settings) {
+        setSettings(settingsData.settings);
+      }
+      
       if (clientsData.clients) {
         setClients(clientsData.clients);
       }
@@ -147,6 +160,8 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   return (
     <CrmContext.Provider
       value={{
+        settings,
+        setSettings,
         clients,
         setClients,
         projects,

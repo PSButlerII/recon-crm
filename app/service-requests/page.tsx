@@ -284,7 +284,10 @@ export default function ServiceRequestsPage() {
           title="Service Requests"
           description="Track incoming work before it becomes a project."
         />
-
+        
+        <Button variant="outline" onClick={refreshCrmData}>
+          {isLoading ? "Refreshing..." : "Refresh"}
+        </Button>
         
 
         <Select
@@ -307,9 +310,7 @@ export default function ServiceRequestsPage() {
             <SelectItem value="Converted">Converted</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" onClick={refreshCrmData}>
-          {isLoading ? "Refreshing..." : "Refresh"}
-        </Button>
+        
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input

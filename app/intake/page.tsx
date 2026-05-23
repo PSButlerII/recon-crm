@@ -39,7 +39,9 @@ export default function IntakePage() {
     intakeSubmissions,
     setIntakeSubmissions,
     setServiceRequests,
-    setActivity
+    setActivity,
+    isLoadingCrm,
+    refreshCrmData
   } = useCrm();
   
 async function loadIntake() {
@@ -246,7 +248,9 @@ async function loadIntake() {
           title="Intake"
           description="Incoming inquiries and website contact submissions."
         />
-
+        <Button variant="outline" onClick={refreshCrmData}>
+          {isLoadingCrm ? "Refreshing..." : "Refresh"}
+        </Button>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             placeholder="Search intake..."

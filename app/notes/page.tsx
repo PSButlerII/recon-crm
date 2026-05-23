@@ -110,42 +110,7 @@ export default function NotesPage() {
     setOpen(false);
   }
 
-  const [isLoading, setIsLoading] = useState(false);
-
-  // async function loadNotes() {
-  //   setIsLoading(true);
-
-  //   try {
-  //     const response = await fetch("/api/notes");
-
-  //     if (!response.ok) {
-  //       const text = await response.text();
-  //       throw new Error(text || "Failed to load notes.");
-  //     }
-
-  //     const data = await response.json();
-
-  //     setNotes(
-  //       data.notes.map((item: any) => ({
-  //         id: item.id,
-  //         clientId: item.clientId ?? undefined,
-  //         projectId: item.projectId ?? undefined,
-  //         title: item.title,
-  //         body: item.body,
-  //         type: item.type,
-  //         createdAt: item.createdAt,
-  //       }))
-  //     );
-  //   } catch (error) {
-  //     console.error(error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // }
-
-  // useEffect(() => {
-  //   loadNotes();
-  // }, []);
+  const [isLoading] = useState(false);
 
   refreshCrmData
 
@@ -163,9 +128,9 @@ export default function NotesPage() {
 
         <div className="flex flex-col gap-2 sm:flex-row">
             <Input
-                placeholder="Search notes..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search notes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
 
             <Select

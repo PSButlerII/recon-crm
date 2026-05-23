@@ -21,9 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export default function ActivityPage() {
-  const { activity } = useCrm();
+  const { activity,isLoadingCrm,refreshCrmData } = useCrm();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"All" | ActivityType>("All");
 
@@ -51,6 +52,10 @@ export default function ActivityPage() {
         title="Activity"
         description="Recent CRM actions, updates, and system events."
       />
+
+      <Button variant="outline" onClick={refreshCrmData}>
+        {isLoadingCrm ? "Refreshing..." : "Refresh"}
+      </Button>
 
       <div className="mb-6 flex flex-col gap-2 sm:flex-row">
         <Input

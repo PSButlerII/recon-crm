@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -21,6 +22,8 @@ export default function DashboardPage() {
     serviceRequests,
     intakeSubmissions,
     activity,
+    isLoadingCrm,
+    refreshCrmData
   } = useCrm();
 
   const recentActivity = [...activity]
@@ -79,7 +82,9 @@ export default function DashboardPage() {
         title="Dashboard"
         description="At-a-glance view of clients, projects, tasks, and upcoming work."
       />
-
+        <Button variant="outline" onClick={refreshCrmData}>
+          {isLoadingCrm ? "Refreshing..." : "Refresh"}
+        </Button>
       <div className="grid gap-4 md:grid-cols-2">
         
         <Card>

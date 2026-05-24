@@ -60,7 +60,21 @@ export default function QuotesPage() {
   const [amount, setAmount] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [issuedDate, setIssuedDate] = useState("");
+  const totalDraft = quotes
+    .filter((quote) => quote.status === "Draft")
+    .reduce((sum, quote) => sum + quote.amount, 0);
 
+  const totalSent = quotes
+    .filter((quote) => quote.status === "Sent")
+    .reduce((sum, quote) => sum + quote.amount, 0);
+
+  const totalAccepted = quotes
+    .filter((quote) => quote.status === "Accepted")
+    .reduce((sum, quote) => sum + quote.amount, 0);
+
+  const totalDeclined = quotes
+    .filter((quote) => quote.status === "Declined")
+    .reduce((sum, quote) => sum + quote.amount, 0);
 
   async function handleCreateQuote() {
     const client = clients.find((client) => client.id === clientId);
@@ -439,7 +453,35 @@ export default function QuotesPage() {
         </Dialog>
         
       </PageActions>
+<div className="mb-6 grid gap-4 md:grid-cols-4">
+  <Card>
+    <CardHeader>
+      <CardDescription>Draft</CardDescription>
+      <CardTitle>{money.format(totalDraft)}</CardTitle>
+    </CardHeader>
+  </Card>
 
+  <Card>
+    <CardHeader>
+      <CardDescription>Sent</CardDescription>
+      <CardTitle>{money.format(totalSent)}</CardTitle>
+    </CardHeader>
+  </Card>
+
+  <Card>
+    <CardHeader>
+      <CardDescription>Accepted</CardDescription>
+      <CardTitle>{money.format(totalAccepted)}</CardTitle>
+    </CardHeader>
+  </Card>
+
+  <Card>
+    <CardHeader>
+      <CardDescription>Declined</CardDescription>
+      <CardTitle>{money.format(totalDeclined)}</CardTitle>
+    </CardHeader>
+  </Card>
+</div>
       <Card>
         <CardHeader>
           <CardTitle>Quote List</CardTitle>

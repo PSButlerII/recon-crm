@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/card";
 import { useCrm } from "@/context/crm-context";
 import { EmptyState } from "@/components/empty-state";
+import { StatCard
 
+ } from "@/components/stat-card";
 export default function DashboardPage() {
  const {
     clients,
@@ -23,6 +25,8 @@ export default function DashboardPage() {
     intakeSubmissions,
     activity,
     isLoadingCrm,
+    quotes,
+  invoices,
     refreshCrmData
   } = useCrm();
 
@@ -75,6 +79,22 @@ export default function DashboardPage() {
     })
     .slice(0, 5);
 
+  const acceptedQuoteTotal = quotes
+    .filter((quote) => quote.status === "Accepted")
+    .reduce((sum, quote) => sum + quote.amount, 0);
+
+  const outstandingInvoiceTotal = invoices
+    .filter((invoice) => invoice.status !== "Paid")
+    .reduce((sum, invoice) => sum + invoice.amount, 0);
+
+  const paidInvoiceTotal = invoices
+    .filter((invoice) => invoice.status === "Paid")
+    .reduce((sum, invoice) => sum + invoice.amount, 0);
+
+    const money = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    });
 
   return (
     <>
@@ -179,6 +199,7 @@ export default function DashboardPage() {
             <CardDescription>
               Latest CRM changes and workflow events.
             </CardDescription>
+            
           </CardHeader>
 
           <CardContent className="space-y-3">
@@ -196,7 +217,30 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle> Billing Totals </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+        <StatCard 
+        label="Accepted Quotes"
+        value={money.format(acceptedQuoteTotal)}
+        />
+
+        <StatCard
+          label="Outstanding Invoices"
+          value={money.format(outstandingInvoiceTotal)}
+        />
+
+        <StatCard
+          label="Paid Invoices"
+          value={money.format(paidInvoiceTotal)}
+        />
+        </CardContent>
+        </Card>
+        </div>
+      
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card>

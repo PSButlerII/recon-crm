@@ -80,6 +80,23 @@ export default function InvoicesPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const totalDraft = invoices
+    .filter((invoice) => invoice.status === "Draft")
+    .reduce((sum, invoice) => sum + invoice.amount, 0);
+
+  const totalSent = invoices
+    .filter((invoice) => invoice.status === "Sent")
+    .reduce((sum, invoice) => sum + invoice.amount, 0);
+
+  const totalPaid = invoices
+    .filter((invoice) => invoice.status === "Paid")
+    .reduce((sum, invoice) => sum + invoice.amount, 0);
+
+  const totalOutstanding = invoices
+    .filter((invoice) => invoice.status !== "Paid")
+    .reduce((sum, invoice) => sum + invoice.amount, 0);
+
+
   async function handleCreateInvoice() {
     const client = clients.find((client) => client.id === clientId);
     const project = projects.find(
@@ -282,6 +299,7 @@ export default function InvoicesPage() {
           &larr; Back to Dashboard
         </Link>
       </Button>
+
       <PageActions>
        
         <PageHeader
@@ -415,9 +433,37 @@ export default function InvoicesPage() {
             
             </DialogContent>
           </Dialog>
-       
-        
       </PageActions>
+
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardDescription>Draft</CardDescription>
+            <CardTitle>{money.format(totalDraft)}</CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardDescription>Sent</CardDescription>
+            <CardTitle>{money.format(totalSent)}</CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardDescription>Paid</CardDescription>
+            <CardTitle>{money.format(totalPaid)}</CardTitle>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardDescription>Outstanding</CardDescription>
+            <CardTitle>{money.format(totalOutstanding)}</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
@@ -497,8 +543,7 @@ export default function InvoicesPage() {
                       )}
                     </div>
                   </TableCell>
-                </TableRow>
-                
+                </TableRow>                
               ))}
             </TableBody>
           </Table>

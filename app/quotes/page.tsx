@@ -43,7 +43,15 @@ import { logActivity } from "@/lib/log-activity";
 
 export default function QuotesPage() {
   
-  const { quotes, setQuotes, clients, projects,setActivity,setInvoices  } = useCrm();
+  const {
+  quotes,
+  setQuotes,
+  clients,
+  projects,
+  invoices,
+  setInvoices,
+  setActivity,
+} = useCrm();
 
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState("");
@@ -443,7 +451,13 @@ export default function QuotesPage() {
             </TableHeader>
 
             <TableBody>
-              {quotes.map((quote) => (
+              {quotes.map((quote) => {
+
+                const existingInvoice = invoices.find(
+                  (invoice) => invoice.quoteId === quote.id
+                );
+
+                return (
                 <TableRow key={quote.id}>
                   <TableCell className="font-medium">{quote.title}</TableCell>
 
@@ -499,7 +513,7 @@ export default function QuotesPage() {
                         
                       </>
                       )}
-                      {quote.status === "Accepted" && (
+                      {quote.status === "Accepted" && !existingInvoice && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -507,6 +521,14 @@ export default function QuotesPage() {
                         >
                           Create Invoice
                         </Button>
+                      )}
+                      {existingInvoice && (
+                        <Link
+                          href="/invoices"
+                          className="text-sm text-slate-600 hover:underline"
+                        >
+                          Invoice Created
+                        </Link>
                       )}
                     </div>
                   </TableCell>
@@ -516,7 +538,8 @@ export default function QuotesPage() {
                   <TableCell>{quote.issuedDate ?? "—"}</TableCell>
 
                 </TableRow>
-              ))}
+    );
+  })}
             </TableBody>
           </Table>
         </CardContent>

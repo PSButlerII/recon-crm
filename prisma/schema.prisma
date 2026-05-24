@@ -167,24 +167,24 @@ model Quote {
 }
 
 model Invoice {
-  id         String   @id @default(cuid())
+  id      String @id @default(cuid())
 
-  quoteId    String?
+  quoteId String? @unique
 
-  clientId   String?
+  clientId String?
   clientName String
 
-  projectId   String?
+  projectId String?
   projectName String?
 
-  title      String
-  status     String   @default("Draft")
-  amount     Float    @default(0)
+  title String
+  status String @default("Draft")
+  amount Float @default(0)
 
   issuedDate DateTime?
-  dueDate    DateTime?
-  paidDate   DateTime?
+  dueDate DateTime?
+  paidDate DateTime?
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -21,7 +21,8 @@ export type Quote = {
 
 export type Invoice = {
   id: string;
-  clientId: string;
+  quoteId?: string;
+  clientId?: string;
   clientName: string;
   projectId?: string;
   projectName?: string;

@@ -47,7 +47,24 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+        if (payload.quoteId) {
+        const existingInvoice = await prisma.invoice.findUnique({
+            where: {
+            quoteId: payload.quoteId,
+            },
+        });
 
+        if (existingInvoice) {
+            return NextResponse.json(
+            {
+                ok: true,
+                duplicate: true,
+                invoice: existingInvoice,
+            },
+            { status: 200 }
+            );
+        }
+        }
     const invoice = await prisma.invoice.create({
       data: {
         quoteId: payload.quoteId,

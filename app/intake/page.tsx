@@ -240,7 +240,11 @@ async function loadIntake() {
       console.error("Failed to persist intake status update.");
     }
   }
+function formatDate(value?: string) {
+  if (!value) return "—";
 
+  return new Date(value).toLocaleDateString();
+}
   return (
     <>
       <PageActions>
@@ -349,7 +353,7 @@ async function loadIntake() {
                   <TableCell>{submission.priority}</TableCell>
 
                   <TableCell>
-                    {submission.submittedAt}
+                    {formatDate(submission.submittedAt)}
                   </TableCell>
 
                   <TableCell>

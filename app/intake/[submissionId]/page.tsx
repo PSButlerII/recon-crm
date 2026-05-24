@@ -173,6 +173,11 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
       console.error("Failed to persist intake status update.");
     }
   }
+  function formatDate(value?: string) {
+  if (!value) return "—";
+
+  return new Date(value).toLocaleDateString();
+}
   return (
     <>
       <div className="mb-6">
@@ -271,7 +276,7 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
 
             <div>
               <p className="text-slate-500">Submitted At</p>
-              <p className="font-medium">{submission.submittedAt}</p>
+              <p className="font-medium">{formatDate(submission.submittedAt)}</p>
             </div>
           </CardContent>
         </Card>

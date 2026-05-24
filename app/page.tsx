@@ -96,6 +96,9 @@ export default function DashboardPage() {
       currency: "USD",
     });
 
+    const recentQuotes = [...quotes].slice(0, 5);
+    const recentInvoices = [...invoices].slice(0, 5);
+
   return (
     <>
       <PageHeader
@@ -105,28 +108,28 @@ export default function DashboardPage() {
         <Button variant="outline" onClick={refreshCrmData}>
           {isLoadingCrm ? "Refreshing..." : "Refresh"}
         </Button>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="mt-4 grid gap-4 md:grid-cols-1">
+        <div className="mt-4 grid gap-4 md:grid-cols-5">          
         
-        <Card>
-          <CardHeader>
-            <CardDescription>Active Clients</CardDescription>
-            <CardTitle className="text-3xl">
-              {clients.filter((client) => client.status === "Active").length}
-            
-            </CardTitle>
-          </CardHeader>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardDescription>Active Clients</CardDescription>
+              <CardTitle className="text-3xl">
+                {clients.filter((client) => client.status === "Active").length}
+              
+              </CardTitle>
+            </CardHeader>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardDescription>Open Requests</CardDescription>
-            <CardTitle className="text-2xl">{openRequests.length}
-             
-            </CardTitle>
-          </CardHeader>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardDescription>Open Requests</CardDescription>
+              <CardTitle className="text-2xl">{openRequests.length}
+              
+              </CardTitle>
+            </CardHeader>
+          </Card>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader>
               <CardDescription>Leads</CardDescription>
@@ -162,85 +165,36 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
           </Card>
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardDescription>Open Projects</CardDescription>
-            <CardTitle className="text-3xl">{openProjects.length}
-            
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardDescription>New Intake</CardDescription>
-            <CardTitle className="text-2xl">{newIntake.length}
-        
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardDescription>Pending Tasks</CardDescription>
-            <CardTitle className="text-3xl">{openTasks.length}
+          <Card>
+            <CardHeader>
+              <CardDescription>Open Projects</CardDescription>
+              <CardTitle className="text-3xl">{openProjects.length}
               
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
+              </CardTitle>
+            </CardHeader>
+          </Card>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest CRM changes and workflow events.
-            </CardDescription>
-            
-          </CardHeader>
+          <Card>
+            <CardHeader>
+              <CardDescription>New Intake</CardDescription>
+              <CardTitle className="text-2xl">{newIntake.length}
+          
+              </CardTitle>
+            </CardHeader>
+          </Card>
 
-          <CardContent className="space-y-3">
-            {recentActivity.length > 0 ? (
-              recentActivity.map((item) => (
-                <div key={item.id} className="rounded-xl border p-4">
-                  <p className="font-medium">{item.message}</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {item.type} · {item.createdAt}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <EmptyState message="No recent activity yet." />
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle> Billing Totals </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-        <StatCard 
-        label="Accepted Quotes"
-        value={money.format(acceptedQuoteTotal)}
-        />
+          <Card>
+            <CardHeader>
+              <CardDescription>Pending Tasks</CardDescription>
+              <CardTitle className="text-3xl">{openTasks.length}
+                
+              </CardTitle>
+            </CardHeader>
+          </Card>
 
-        <StatCard
-          label="Outstanding Invoices"
-          value={money.format(outstandingInvoiceTotal)}
-        />
-
-        <StatCard
-          label="Paid Invoices"
-          value={money.format(paidInvoiceTotal)}
-        />
-        </CardContent>
-        </Card>
         </div>
-      
+      </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card>
@@ -365,7 +319,110 @@ export default function DashboardPage() {
               )}
           </CardContent>
         </Card>
+
       </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>
+              Latest CRM changes and workflow events.
+            </CardDescription>
+            
+          </CardHeader>
+
+          <CardContent className="space-y-3">
+            {recentActivity.length > 0 ? (
+              recentActivity.map((item) => (
+                <div key={item.id} className="rounded-xl border p-4">
+                  <p className="font-medium">{item.message}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {item.type} · {item.createdAt}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <EmptyState message="No recent activity yet." />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Quotes</CardTitle>
+            <CardDescription>Latest quote activity.</CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-3">
+            {recentQuotes.length > 0 ? (
+              recentQuotes.map((quote) => (
+                <Link
+                  key={quote.id}
+                  href="/quotes"
+                  className="block rounded-xl border p-4 hover:bg-slate-50"
+                >
+                  <p className="font-medium">{quote.title}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {quote.status} · {money.format(quote.amount)}
+                  </p>
+                </Link>
+              ))
+            ) : (
+              <EmptyState message="No quotes yet." />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle> Billing Totals </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+        <StatCard 
+        label="Accepted Quotes"
+        value={money.format(acceptedQuoteTotal)}
+        />
+
+        <StatCard
+          label="Outstanding Invoices"
+          value={money.format(outstandingInvoiceTotal)}
+        />
+
+        <StatCard
+          label="Paid Invoices"
+          value={money.format(paidInvoiceTotal)}
+        />
+        </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Invoices</CardTitle>
+            <CardDescription>Latest invoice activity.</CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-3">
+            {recentInvoices.length > 0 ? (
+              recentInvoices.map((invoice) => (
+                <Link
+                  key={invoice.id}
+                  href={`/invoices/${invoice.id}`}
+                  className="block rounded-xl border p-4 hover:bg-slate-50"
+                >
+                  <p className="font-medium">{invoice.title}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {invoice.status} · {money.format(invoice.amount)}
+                  </p>
+                </Link>
+              ))
+            ) : (
+              <EmptyState message="No invoices yet." />
+            )}
+          </CardContent>
+        </Card>
+        
+      </div>    
     </>
   );
 }

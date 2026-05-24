@@ -168,7 +168,11 @@ export default function ProjectsPage() {
     setSuccessMessage(`Project "${name}" was added.`);
     setOpen(false);
   }
-  
+  function formatDate(value?: string) {
+  if (!value) return "—";
+
+  return new Date(value).toLocaleDateString();
+}
   refreshCrmData  
   
   return (
@@ -394,7 +398,7 @@ export default function ProjectsPage() {
                   </TableCell>
                   <TableCell>{project.priority}</TableCell>
                   <TableCell>{project.progress}%</TableCell>
-                  <TableCell>{project.dueDate ?? "—"}</TableCell>
+                  <TableCell>{formatDate(project.dueDate)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

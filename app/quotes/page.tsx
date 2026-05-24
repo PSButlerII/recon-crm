@@ -336,6 +336,11 @@ export default function QuotesPage() {
     }
   }
 
+  function formatDate(value?: string) {
+    if (!value) return "—";
+    return new Date(value).toLocaleDateString();
+  }
+
   const money = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -586,8 +591,8 @@ export default function QuotesPage() {
                   </TableCell>
 
                   <TableCell>{money.format(quote.amount)}</TableCell>
-                  <TableCell>{quote.validUntil ?? "—"}</TableCell>
-                  <TableCell>{quote.issuedDate ?? "—"}</TableCell>
+                  <TableCell>{formatDate(quote.validUntil)}</TableCell>
+                  <TableCell>{formatDate(quote.issuedDate)}</TableCell>
 
                 </TableRow>
     );

@@ -96,6 +96,11 @@ export default function InvoicesPage() {
     .filter((invoice) => invoice.status !== "Paid")
     .reduce((sum, invoice) => sum + invoice.amount, 0);
 
+  function formatDate(value?: string) {
+    if (!value) return "—";
+
+    return new Date(value).toLocaleDateString();
+  }
 
   async function handleCreateInvoice() {
     const client = clients.find((client) => client.id === clientId);
@@ -518,7 +523,7 @@ export default function InvoicesPage() {
                   <TableCell>{money.format(invoice.amount)}</TableCell>
 
                   <TableCell>
-                    {invoice.dueDate ?? "—"}
+                    {formatDate(invoice.dueDate)}
                   </TableCell>
 
                   <TableCell>

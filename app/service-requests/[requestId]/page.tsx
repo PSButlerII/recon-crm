@@ -146,7 +146,11 @@ export default function ServiceRequestDetailPage({ params }: ServiceRequestDetai
     ]);
   }
 }
+function formatDate(value?: string) {
+  if (!value) return "—";
 
+  return new Date(value).toLocaleDateString();
+}
   return (
     <>
       <div className="mb-6">
@@ -206,7 +210,7 @@ export default function ServiceRequestDetailPage({ params }: ServiceRequestDetai
 
             <div>
               <p className="text-slate-500">Requested At</p>
-              <p>{request.requestedAt || "—"}</p>
+              <p>{formatDate(request.requestedAt)}</p>
             </div>
 
           </CardContent>

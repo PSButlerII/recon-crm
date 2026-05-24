@@ -111,7 +111,11 @@ export default function NotesPage() {
   }
 
   const [isLoading] = useState(false);
+function formatDate(value?: string) {
+  if (!value) return "—";
 
+  return new Date(value).toLocaleDateString();
+}
   refreshCrmData
 
   return (
@@ -249,7 +253,7 @@ export default function NotesPage() {
                   title={note.title}
                   description={note.body}
                   metaTop={note.type}
-                  metaBottom={note.createdAt}
+                  metaBottom={formatDate(note.createdAt)}
                 />
               ))
             ) : (

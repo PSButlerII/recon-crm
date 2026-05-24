@@ -338,7 +338,11 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       ]);
     }
   }
+function formatDate(value?: string) {
+  if (!value) return "—";
 
+  return new Date(value).toLocaleDateString();
+}
   if (!project) {
     notFound();
   }
@@ -390,12 +394,12 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
 
             <div>
               <p className="text-slate-500">Start Date</p>
-              <p className="font-medium">{project.startDate ?? "—"}</p>
+              <p className="font-medium">{formatDate(project.startDate)}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Due Date</p>
-              <p className="font-medium">{project.dueDate ?? "—"}</p>
+              <p className="font-medium">{formatDate(project.dueDate)}</p>
             </div>
           </CardContent>
         </Card>
@@ -517,7 +521,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
 
                         <div className="text-right text-sm text-slate-500">
                           <p>{task.priority}</p>
-                          <p>{task.dueDate || "No due date"}</p>
+                          <p>{formatDate(task.dueDate) || "No due date"}</p>
                         </div>
                       </div>
                     </div>
@@ -573,7 +577,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                       title={note.title}
                       description=  {note.body}
                       metaTop={note.type}
-                      metaBottom={note.createdAt}                         
+                      metaBottom={formatDate(note.createdAt)}                         
                     />
                   ))
                 ) : (
@@ -595,7 +599,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                       key={activity.id}
                       title={activity.message}
                       description={activity.type}
-                      metaTop={activity.createdAt}
+                      metaTop={formatDate(activity.createdAt)}
                       
                     />
                   ))
@@ -659,7 +663,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
                       title={file.name}
                       description={file.type}
                       metaTop={file.size}
-                      metaBottom={file.uploadedAt}
+                      metaBottom={formatDate(file.uploadedAt)}
                     />
                   ))
                 ) : (

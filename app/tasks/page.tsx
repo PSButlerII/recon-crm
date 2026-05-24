@@ -150,43 +150,12 @@ export default function TasksPage() {
   }
   const [isLoading, setIsLoading] = useState(false);
 
-  // async function loadTasks() {
-  //   setIsLoading(true);
+function formatDate(value?: string) {
+  if (!value) return "—";
 
-  //   try {
-  //     const response = await fetch("/api/tasks");
-
-  //     if (!response.ok) {
-  //       const text = await response.text();
-  //       throw new Error(text || "Failed to load tasks.");
-  //     }
-
-  //     const data = await response.json();
-
-  //     setTasks(
-  //       data.tasks.map((item: any) => ({
-  //         id: item.id,
-  //         projectId: item.projectId,
-  //         projectName: item.projectName,
-  //         clientId: item.clientId ?? undefined,
-  //         clientName: item.clientName ?? undefined,
-  //         title: item.title,
-  //         description: item.description ?? undefined,
-  //         status: item.status,
-  //         priority: item.priority,
-  //         dueDate: item.dueDate ?? undefined,
-  //       }))
-  //     );
-  //   } catch (error) {
-  //     console.error(error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // }
-
-  // useEffect(() => {
-  //   loadTasks();
-  // }, []);
+  return new Date(value).toLocaleDateString();
+}
+ 
 refreshCrmData
   return (
     <>
@@ -349,11 +318,11 @@ refreshCrmData
         </Dialog>
         </div>
       </PageActions>
-{successMessage && (
-  <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-    {successMessage}
-  </div>
-)}
+      {successMessage && (
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+          {successMessage}
+        </div>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Task List</CardTitle>
@@ -405,7 +374,7 @@ refreshCrmData
                   </TableCell>
 
                   <TableCell>{task.priority}</TableCell>
-                  <TableCell>{task.dueDate ?? "—"}</TableCell>
+                  <TableCell>{formatDate(task.dueDate)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

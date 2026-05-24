@@ -274,7 +274,11 @@ export default function ServiceRequestsPage() {
   // useEffect(() => {
   //   loadServiceRequests();
   // }, []);
- 
+ function formatDate(value?: string) {
+  if (!value) return "—";
+
+  return new Date(value).toLocaleDateString();
+}
   refreshCrmData
  
   return (
@@ -470,7 +474,7 @@ export default function ServiceRequestsPage() {
                     </Badge>
                   </TableCell>
 
-                  <TableCell>{request.requestedAt}</TableCell>
+                  <TableCell>{formatDate(request.requestedAt)}</TableCell>
 
                   <TableCell>
                     <Button

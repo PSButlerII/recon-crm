@@ -123,6 +123,11 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailPageProps) {
         );
     }
 
+    function formatDate(value?: string) {
+    if (!value) return "—";
+
+    return new Date(value).toLocaleDateString();
+    }
   return (
     <>
       <Button variant="ghost" asChild>
@@ -199,17 +204,17 @@ export default function InvoiceDetailPage({ params }: InvoiceDetailPageProps) {
 
           <div>
             <p className="text-slate-500">Issued Date</p>
-            <p>{invoice.issuedDate ?? "—"}</p>
+            <p>{formatDate(invoice.issuedDate)}</p>
           </div>
 
           <div>
             <p className="text-slate-500">Due Date</p>
-            <p>{invoice.dueDate ?? "—"}</p>
+            <p>{formatDate(invoice.dueDate)}</p>
           </div>
 
           <div>
             <p className="text-slate-500">Paid Date</p>
-            <p>{invoice.paidDate ?? "—"}</p>
+            <p>{formatDate(invoice.paidDate)}</p>
           </div>
         </CardContent>
       </Card>

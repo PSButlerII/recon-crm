@@ -39,7 +39,11 @@ export default function CalendarPage() {
         priority: task.priority,
       })),
   ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+function formatDate(value?: string) {
+  if (!value) return "—";
 
+  return new Date(value).toLocaleDateString();
+}
   return (
     <>
       <PageHeader
@@ -76,7 +80,7 @@ export default function CalendarPage() {
                 </div>
 
                 <div className="text-right text-sm font-medium">
-                  {item.date}
+                  {formatDate(item.date)}
                 </div>
               </div>
             </Link>

@@ -328,8 +328,18 @@ export default function QuotesPage() {
   });
 
   return (
-    <>
+    <> <Button variant="ghost" asChild>
+        <Link href="/">          
+          &larr; Back to Dashboard
+        </Link>
+      </Button>
+      <Button variant="ghost" asChild>
+        <Link href="/invoices">          
+          Go to invoices &rarr;
+        </Link>
+      </Button>
       <PageActions>
+        
         <PageHeader
           title="Quotes"
           description="Track proposed work, estimates, and accepted offers."

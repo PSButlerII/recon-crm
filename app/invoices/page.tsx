@@ -18,9 +18,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useState } from "react";
 import { PageActions } from "@/components/page-actions";
 import { useCrm } from "@/context/crm-context";
 import { logActivity } from "@/lib/log-activity";
+import type { BillingStatus, Invoice } from "@/types/billing";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription
+} from "@/components/ui/dialog"; 
+import { Label } from "@/components/ui/label";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -28,8 +47,118 @@ const money = new Intl.NumberFormat("en-US", {
 });
 
 export default function InvoicesPage() {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"All" | BillingStatus>("All"); 
+  const [open, setOpen] = useState(false);
+  const [clientId, setClientId] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const {
+    invoices,
+    setInvoices,
+    clients,
+    projects,
+    setActivity,
+  } = useCrm();
 
-  const { invoices, setInvoices, setActivity } = useCrm();
+  const filteredInvoices = invoices.filter((invoice) => {
+    const matchesSearch =
+      invoice.title.toLowerCase().includes(search.toLowerCase()) ||
+      invoice.clientName.toLowerCase().includes(search.toLowerCase()) ||
+      invoice.projectName?.toLowerCase().includes(search.toLowerCase()) ||
+      invoice.status.toLowerCase().includes(search.toLowerCase());
+
+      const effectiveStatus = isInvoiceOverdue(invoice)
+      ? "Overdue"
+      : invoice.status;
+
+    const matchesStatus =
+      statusFilter === "All" || effectiveStatus === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  async function handleCreateInvoice() {
+    const client = clients.find((client) => client.id === clientId);
+    const project = projects.find(
+      (project) => project.id === projectId && project.clientId === clientId
+    );
+
+    if (!client || !title) return;
+
+    const newInvoice = {
+      clientId: client.id,
+      clientName: client.name,
+      projectId: project?.id,
+      projectName: project?.name,
+      title,
+      status: "Draft" as const,
+      amount: Number(amount || 0),
+      dueDate,
+    };
+
+    const response = await fetch("/api/invoices", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newInvoice),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to create invoice.");
+      return;
+    }
+
+    const data = await response.json();
+    const savedInvoice = data.invoice;
+
+    setInvoices((current) => [
+      {
+        id: savedInvoice.id,
+        quoteId: savedInvoice.quoteId ?? undefined,
+        clientId: savedInvoice.clientId ?? undefined,
+        clientName: savedInvoice.clientName,
+        projectId: savedInvoice.projectId ?? undefined,
+        projectName: savedInvoice.projectName ?? undefined,
+        title: savedInvoice.title,
+        status: savedInvoice.status,
+        amount: savedInvoice.amount,
+        issuedDate: savedInvoice.issuedDate ?? undefined,
+        dueDate: savedInvoice.dueDate ?? undefined,
+        paidDate: savedInvoice.paidDate ?? undefined,
+      },
+      ...current,
+    ]);
+    const savedActivity = await logActivity({
+      clientId: savedInvoice.clientId ?? undefined,
+      projectId: savedInvoice.projectId ?? undefined,
+      type: "System",
+      message: `Created invoice "${savedInvoice.title}" as a draft.`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => [
+        {
+          id: savedActivity.id,
+          clientId: savedActivity.clientId ?? undefined,
+          projectId: savedActivity.projectId ?? undefined,
+          type: savedActivity.type,
+          message: savedActivity.message,
+          createdAt: savedActivity.createdAt,
+        },
+        ...current,
+      ]);
+    }
+    setOpen(false);
+    setClientId("");
+    setProjectId("");
+    setTitle("");
+    setAmount("");
+    setDueDate("");
+  }
 
   async function handleMarkInvoiceSent(invoiceId: string) {
     const response = await fetch("/api/invoices", {
@@ -139,15 +268,154 @@ export default function InvoicesPage() {
     }
   }
 
+  function isInvoiceOverdue(invoice: Invoice) {
+    if (invoice.status === "Paid") return false;
+    if (!invoice.dueDate) return false;
+
+    return new Date(invoice.dueDate) < new Date();
+  }
+
   return (
     <>
+     <Button variant="ghost" asChild>
+        <Link href="/">          
+          &larr; Back to Dashboard
+        </Link>
+      </Button>
       <PageActions>
+       
         <PageHeader
           title="Invoices"
           description="Track billable work, payment status, and due dates."
         />
 
-        <Button>Create Invoice</Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            placeholder="Search invoices..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <Select
+            value={statusFilter}
+            onValueChange={(value) =>
+              setStatusFilter(value as "All" | BillingStatus)
+            }
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="All">All</SelectItem>
+              <SelectItem value="Draft">Draft</SelectItem>
+              <SelectItem value="Sent">Sent</SelectItem>
+              <SelectItem value="Paid">Paid</SelectItem>
+              <SelectItem value="Overdue">Overdue</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>Create Invoice</Button>
+          </DialogTrigger>
+
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Invoice</DialogTitle>
+              <DialogDescription>
+                Create a new invoice linked to a client project.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Invoice Name</Label>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Client</Label>
+
+                <Select
+                  value={clientId}
+                  onValueChange={(value) => {
+                    setClientId(value);
+                    setProjectId("");
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select client" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Project</Label>
+                <Select 
+                value={projectId}
+                onValueChange={(value)=> setProjectId(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Project"/>
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {projects
+                      .filter((project) => project.clientId === clientId)
+                      .map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div> 
+
+              <div className="space-y-2">
+                <Label>Amount</Label>
+                <Input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+              </div>  
+
+              <div className="grid gap-4 sm:grid-cols-2">             
+                <div className="space-y-2">
+                  <Label>Due Date</Label>
+                  <Input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={handleCreateInvoice}
+                disabled={!title || !clientId}
+              >
+                Save Invoice
+              </Button>
+            </div>
+            
+            </DialogContent>
+          </Dialog>
+       
         
       </PageActions>
 
@@ -172,9 +440,12 @@ export default function InvoicesPage() {
             </TableHeader>
 
             <TableBody>
-              {invoices.map((invoice) => (
+              {filteredInvoices.map((invoice) => (
                 <TableRow key={invoice.id}>
-                  <TableCell className="font-medium">{invoice.title}</TableCell>
+                  <TableCell className="font-medium"><Link href={`/invoices/${invoice.id}`} className="hover:underline">
+                      {invoice.title}
+                    </Link>
+                  </TableCell>
 
                   <TableCell>
                     <Link href={`/clients/${invoice.clientId}`} className="hover:underline">
@@ -193,7 +464,9 @@ export default function InvoicesPage() {
                   </TableCell>
 
                   <TableCell>
-                    <Badge variant="outline">{invoice.status}</Badge>
+                    <Badge variant="outline">
+                      {isInvoiceOverdue(invoice) ? "Overdue" : invoice.status}
+                    </Badge>
                   </TableCell>
 
                   <TableCell>{money.format(invoice.amount)}</TableCell>

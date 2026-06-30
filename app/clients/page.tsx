@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/page-header";
-import type { ClientStatus } from "@/types/client";
+import type { Client, ClientStatus } from "@/types/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +51,23 @@ type ClientResponse = {
   client: PersistedClient;
 };
 
+type ClientUpdatePayload = {
+  id: string;
+  name?: string;
+  contactName?: string;
+  email?: string;
+  phone?: string | null;
+  status?: ClientStatus;
+  lastContacted?: string | null;
+};
+
+const CLIENT_STATUSES: ClientStatus[] = [
+  "Lead",
+  "Active",
+  "Paused",
+  "Archived",
+];
+
 export default function ClientsPage() {
   const statusVariants = {
   Lead: "secondary",
@@ -75,6 +92,18 @@ export default function ClientsPage() {
   const [status, setStatus] = useState<ClientStatus>("Lead");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | ClientStatus>("All");
+  const [updatingStatusClientId, setUpdatingStatusClientId] = useState<
+    string | null
+  >(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingClientId, setEditingClientId] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editContactName, setEditContactName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editStatus, setEditStatus] = useState<ClientStatus>("Lead");
+  const [editLastContacted, setEditLastContacted] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const filteredClients = clients.filter((client) => {
   const matchesSearch =
@@ -87,6 +116,149 @@ export default function ClientsPage() {
 
   return matchesSearch && matchesStatus;
 });
+
+  function dateInputValue(value?: string) {
+    if (!value) return "";
+
+    const datePrefix = value.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+
+    if (datePrefix) return datePrefix;
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toISOString().split("T")[0];
+  }
+
+  async function updateClient(payload: ClientUpdatePayload) {
+    const response = await fetch("/api/clients", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to update client.");
+      return null;
+    }
+
+    const data = (await response.json()) as ClientResponse;
+    const savedClient = mapClient(data.client);
+
+    setClients((current) => upsertById(current, savedClient));
+
+    return savedClient;
+  }
+
+  async function logClientStatusChange(
+    clientId: string,
+    clientName: string,
+    previousStatus: ClientStatus,
+    nextStatus: ClientStatus
+  ) {
+    if (previousStatus === nextStatus) return;
+
+    const savedActivity = await logActivity({
+      clientId,
+      type: "Client",
+      message: `Updated client "${clientName}" status from ${previousStatus} to ${nextStatus}.`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) =>
+        current.some((item) => item.id === savedActivity.id)
+          ? current
+          : [savedActivity, ...current]
+      );
+    }
+  }
+
+  async function handleClientStatusChange(
+    client: Client,
+    nextStatus: ClientStatus
+  ) {
+    if (client.status === nextStatus || updatingStatusClientId) return;
+
+    setUpdatingStatusClientId(client.id);
+
+    try {
+      const savedClient = await updateClient({
+        id: client.id,
+        status: nextStatus,
+      });
+
+      if (savedClient) {
+        await logClientStatusChange(
+          savedClient.id,
+          savedClient.name,
+          client.status,
+          savedClient.status
+        );
+      }
+    } finally {
+      setUpdatingStatusClientId(null);
+    }
+  }
+
+  function openEditClient(client: Client) {
+    setEditingClientId(client.id);
+    setEditName(client.name);
+    setEditContactName(client.contactName);
+    setEditEmail(client.email);
+    setEditPhone(client.phone ?? "");
+    setEditStatus(client.status);
+    setEditLastContacted(dateInputValue(client.lastContacted));
+    setEditOpen(true);
+  }
+
+  function resetEditClient() {
+    setEditingClientId("");
+    setEditName("");
+    setEditContactName("");
+    setEditEmail("");
+    setEditPhone("");
+    setEditStatus("Lead");
+    setEditLastContacted("");
+  }
+
+  async function handleUpdateClient() {
+    const originalClient = clients.find(
+      (client) => client.id === editingClientId
+    );
+
+    if (!originalClient) return;
+
+    setIsSavingEdit(true);
+
+    try {
+      const savedClient = await updateClient({
+        id: originalClient.id,
+        name: editName,
+        contactName: editContactName,
+        email: editEmail,
+        phone: editPhone || null,
+        status: editStatus,
+        lastContacted: editLastContacted || null,
+      });
+
+      if (!savedClient) return;
+
+      await logClientStatusChange(
+        savedClient.id,
+        savedClient.name,
+        originalClient.status,
+        savedClient.status
+      );
+
+      setEditOpen(false);
+      resetEditClient();
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }
 
   async function handleAddClient() {
     const newClient = {
@@ -168,10 +340,11 @@ export default function ClientsPage() {
 
               <SelectContent>
                 <SelectItem value="All">All</SelectItem>
-                <SelectItem value="Lead">Lead</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Paused">Paused</SelectItem>
-                <SelectItem value="Archived">Archived</SelectItem>
+                {CLIENT_STATUSES.map((clientStatus) => (
+                  <SelectItem key={clientStatus} value={clientStatus}>
+                    {clientStatus}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -230,10 +403,11 @@ export default function ClientsPage() {
                   </SelectTrigger>
 
                   <SelectContent>
-                    <SelectItem value="Lead">Lead</SelectItem>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Paused">Paused</SelectItem>
-                    <SelectItem value="Archived">Archived</SelectItem>
+                    {CLIENT_STATUSES.map((clientStatus) => (
+                      <SelectItem key={clientStatus} value={clientStatus}>
+                        {clientStatus}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -268,6 +442,7 @@ export default function ClientsPage() {
                 <TableHead>Email</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Projects</TableHead>
+                <TableHead>Actions</TableHead>
                 <TableHead>Last Contact</TableHead>
               </TableRow>
             </TableHeader>
@@ -283,11 +458,43 @@ export default function ClientsPage() {
                   <TableCell>{client.contactName}</TableCell>
                   <TableCell>{client.email}</TableCell>
                   <TableCell>
-                    <Badge variant={statusVariants[client.status]}>
-                      {client.status}
-                    </Badge>
+                    <Select
+                      value={client.status}
+                      disabled={updatingStatusClientId === client.id}
+                      onValueChange={(value) =>
+                        handleClientStatusChange(
+                          client,
+                          value as ClientStatus
+                        )
+                      }
+                    >
+                      <SelectTrigger className="w-[132px]">
+                        <Badge variant={statusVariants[client.status]}>
+                          {updatingStatusClientId === client.id
+                            ? "Saving..."
+                            : client.status}
+                        </Badge>
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        {CLIENT_STATUSES.map((clientStatus) => (
+                          <SelectItem key={clientStatus} value={clientStatus}>
+                            {clientStatus}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>{client.projectCount}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditClient(client)}
+                    >
+                      Edit
+                    </Button>
+                  </TableCell>
                   <TableCell>{client.lastContacted ?? "—"}</TableCell>
                 </TableRow>
               ))}
@@ -295,6 +502,107 @@ export default function ClientsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={editOpen}
+        onOpenChange={(nextOpen) => {
+          setEditOpen(nextOpen);
+
+          if (!nextOpen) {
+            resetEditClient();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Client</DialogTitle>
+            <DialogDescription>
+              Update the client record and current relationship status.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Client / Company Name</Label>
+              <Input
+                value={editName}
+                onChange={(event) => setEditName(event.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Contact Name</Label>
+              <Input
+                value={editContactName}
+                onChange={(event) => setEditContactName(event.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={editEmail}
+                onChange={(event) => setEditEmail(event.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Phone Number</Label>
+              <Input
+                type="phone"
+                value={editPhone}
+                onChange={(event) => setEditPhone(event.target.value)}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={editStatus}
+                  onValueChange={(value) =>
+                    setEditStatus(value as ClientStatus)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {CLIENT_STATUSES.map((clientStatus) => (
+                      <SelectItem key={clientStatus} value={clientStatus}>
+                        {clientStatus}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Last Contact</Label>
+                <Input
+                  type="date"
+                  value={editLastContacted}
+                  onChange={(event) =>
+                    setEditLastContacted(event.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <Button
+              className="w-full"
+              onClick={handleUpdateClient}
+              disabled={
+                isSavingEdit || !editName || !editContactName || !editEmail
+              }
+            >
+              {isSavingEdit ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

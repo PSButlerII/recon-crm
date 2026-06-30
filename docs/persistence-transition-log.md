@@ -66,4 +66,30 @@ Moved the Clients module fully onto the existing PostgreSQL-backed Prisma API pa
 
 ### Remaining Work
 
-- Add edit/status UI actions that call `PATCH /api/clients`.
+- Edit/status UI actions were completed in the next log entry.
+
+## 2026-06-30 - Client Edit and Status Controls
+
+### Scope
+
+Added client update controls on the database-backed Clients page.
+
+### Changes
+
+- Added a status control to every client row.
+- Added a shared client PATCH helper in `app/clients/page.tsx`.
+- Status changes call `PATCH /api/clients` with the client id and new status.
+- Client context updates use the saved client returned by the API through `mapClient`.
+- Status changes create saved activity entries through `logActivity`.
+- Added an Edit Client dialog for name, contact name, email, phone, status, and last contacted date.
+- Edit saves call `PATCH /api/clients` and update context from the saved API response.
+
+### Verification
+
+- `npm run build` passed after adding client edit/status controls.
+- `npm run lint` still has unrelated pre-existing failures in intake, project detail, settings, and CRM context.
+
+### Remaining Work
+
+- Consider adding inline success/error feedback for client update failures.
+- Continue moving conversion flows to atomic/idempotent APIs, starting with Intake to Service Request.

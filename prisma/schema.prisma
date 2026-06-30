@@ -57,7 +57,7 @@ model Project {
   clientId         String?
   clientName       String
 
-  serviceRequestId String?
+  serviceRequestId String?  @unique
 
   name             String
   description      String

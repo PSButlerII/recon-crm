@@ -14,6 +14,21 @@ type CreateProjectPayload = {
   dueDate?: string;
 };
 
+function buildProjectData(payload: CreateProjectPayload) {
+  return {
+    clientId: payload.clientId,
+    clientName: payload.clientName,
+    serviceRequestId: payload.serviceRequestId,
+    name: payload.name,
+    description: payload.description,
+    status: payload.status ?? "Planning",
+    priority: payload.priority ?? "Medium",
+    progress: payload.progress ?? 0,
+    startDate: payload.startDate ? new Date(payload.startDate) : null,
+    dueDate: payload.dueDate ? new Date(payload.dueDate) : null,
+  };
+}
+
 export async function GET() {
   try {
     const projects = await prisma.project.findMany({
@@ -47,24 +62,65 @@ export async function POST(request: Request) {
       );
     }
 
+    const projectData = buildProjectData(payload);
+
+    if (payload.serviceRequestId) {
+      const existingProject = await prisma.project.findFirst({
+        where: {
+          serviceRequestId: payload.serviceRequestId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      if (existingProject) {
+        return NextResponse.json({
+          ok: true,
+          created: false,
+          project: existingProject,
+        });
+      }
+
+      const createResult = await prisma.project.createMany({
+        data: projectData,
+        skipDuplicates: true,
+      });
+
+      const project = await prisma.project.findFirst({
+        where: {
+          serviceRequestId: payload.serviceRequestId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      if (!project) {
+        return NextResponse.json(
+          { error: "Failed to load created project." },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          ok: true,
+          created: createResult.count === 1,
+          project,
+        },
+        { status: createResult.count === 1 ? 201 : 200 }
+      );
+    }
+
     const project = await prisma.project.create({
-      data: {
-        clientId: payload.clientId,
-        clientName: payload.clientName,
-        serviceRequestId: payload.serviceRequestId,
-        name: payload.name,
-        description: payload.description,
-        status: payload.status ?? "Planning",
-        priority: payload.priority ?? "Medium",
-        progress: payload.progress ?? 0,
-        startDate: payload.startDate ? new Date(payload.startDate) : null,
-        dueDate: payload.dueDate ? new Date(payload.dueDate) : null,
-      },
+      data: projectData,
     });
 
     return NextResponse.json(
       {
         ok: true,
+        created: true,
         project,
       },
       { status: 201 }

@@ -1,4 +1,8 @@
-import type { ActivityType } from "@/types/activity";
+import type { Activity, ActivityType } from "@/types/activity";
+import {
+  mapActivity,
+  type PersistedActivity,
+} from "@/lib/crm-record-mappers";
 
 type LogActivityInput = {
   clientId?: string;
@@ -7,7 +11,13 @@ type LogActivityInput = {
   message: string;
 };
 
-export async function logActivity(input: LogActivityInput) {
+type LogActivityResponse = {
+  activity: PersistedActivity;
+};
+
+export async function logActivity(
+  input: LogActivityInput
+): Promise<Activity | null> {
   const response = await fetch("/api/activity", {
     method: "POST",
     headers: {
@@ -21,7 +31,7 @@ export async function logActivity(input: LogActivityInput) {
     return null;
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as LogActivityResponse;
 
-  return data.activity;
+  return mapActivity(data.activity);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { use } from "react";
+import { use, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useCrm } from "@/context/crm-context";
 import { PageHeader } from "@/components/page-header";
@@ -14,7 +14,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { logActivity } from "@/lib/log-activity";
+import {
+  mapActivity,
+  mapProject,
+  mapServiceRequest,
+  upsertById,
+  type ServiceRequestConversionResponse,
+} from "@/lib/crm-record-mappers";
 
 
 type ServiceRequestDetailPageProps = {
@@ -22,7 +28,6 @@ type ServiceRequestDetailPageProps = {
     requestId: string;
   }>;
 };
-
 
 
 export default function ServiceRequestDetailPage({ params }: ServiceRequestDetailPageProps) {
@@ -46,6 +51,8 @@ export default function ServiceRequestDetailPage({ params }: ServiceRequestDetai
     isLoadingCrm
   } = useCrm();
 
+  const [isConverting, setIsConverting] = useState(false);
+
   const request = serviceRequests.find(
     (item) => item.id === requestId
   );
@@ -64,87 +71,52 @@ export default function ServiceRequestDetailPage({ params }: ServiceRequestDetai
   );
 
   async function handleConvertToProject() {
+    if (isConverting) return;
+
     const currentRequest = serviceRequests.find(
       (item) => item.id === requestId
     );
 
-  if (!currentRequest) return;
+    if (!currentRequest || currentRequest.status === "Converted") return;
 
-  const newProject = {
-    id: crypto.randomUUID(),
-    clientId: currentRequest.clientId ?? "",
-    clientName: currentRequest.clientName ?? "Unassigned",
-    serviceRequestId: currentRequest.id,
-    name: currentRequest.title,
-    description: currentRequest.description,
-    status: "Planning" as const,
-    priority: "Medium" as const,
-    progress: 0,
-    startDate: new Date().toISOString().split("T")[0],
-    dueDate: "",
-  };
+    setIsConverting(true);
 
-  const projectResponse = await fetch("/api/projects", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(newProject),
-  });
+    try {
+      const response = await fetch("/api/service-requests/convert", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: currentRequest.id,
+          priority: "Medium",
+        }),
+      });
 
-  if (!projectResponse.ok) {
-    console.error("Failed to persist project.");
-    return;
-  }
+      if (!response.ok) {
+        console.error("Failed to convert service request.");
+        return;
+      }
 
-  const projectData = await projectResponse.json();
-  const savedProject = projectData.project;
+      const data = (await response.json()) as ServiceRequestConversionResponse;
+      const savedProject = mapProject(data.project);
+      const savedRequest = mapServiceRequest(data.serviceRequest);
 
-  setProjects((current) => [
-    {
-      id: savedProject.id,
-      clientId: savedProject.clientId ?? undefined,
-      clientName: savedProject.clientName,
-      serviceRequestId: savedProject.serviceRequestId ?? undefined,
-      name: savedProject.name,
-      description: savedProject.description,
-      status: savedProject.status,
-      priority: savedProject.priority,
-      progress: savedProject.progress,
-      startDate: savedProject.startDate ?? undefined,
-      dueDate: savedProject.dueDate ?? undefined,
-    },
-    ...current,
-  ]);
+      setProjects((current) => upsertById(current, savedProject));
+      setServiceRequests((current) => upsertById(current, savedRequest));
 
-    setServiceRequests((current) =>
-      current.map((item) =>
-        item.id === currentRequest.id
-          ? { ...item, status: "Converted" }
-          : item
-      )
-    );
+      if (data.activity) {
+        const savedActivity = mapActivity(data.activity);
 
-    const savedActivity = await logActivity({
-    clientId: savedProject.clientId ?? undefined,
-    projectId: savedProject.id,
-    type: "Project",
-    message: `Created project "${savedProject.name}" from service request.`,
-  });
-
-  if (savedActivity) {
-    setActivity((current) => [
-      {
-        id: savedActivity.id,
-        clientId: savedActivity.clientId ?? undefined,
-        projectId: savedActivity.projectId ?? undefined,
-        type: savedActivity.type,
-        message: savedActivity.message,
-        createdAt: savedActivity.createdAt,
-      },
-      ...current,
-    ]);
-  }
+        setActivity((current) =>
+          current.some((item) => item.id === savedActivity.id)
+            ? current
+            : [savedActivity, ...current]
+        );
+      }
+    } finally {
+      setIsConverting(false);
+    }
 }
 function formatDate(value?: string) {
   if (!value) return "—";
@@ -175,10 +147,14 @@ function formatDate(value?: string) {
 
             <Button
               size="sm"
-              disabled={request.status === "Converted"}
+              disabled={isConverting || request.status === "Converted"}
               onClick={handleConvertToProject}
             >
-              {request.status === "Converted" ? "Converted" : "Convert"}
+              {isConverting
+                ? "Converting..."
+                : request.status === "Converted"
+                  ? "Converted"
+                  : "Convert"}
             </Button>
           </div>
 

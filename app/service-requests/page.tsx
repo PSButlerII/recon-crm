@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 import { PageActions } from "@/components/page-actions";
@@ -25,12 +25,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useCrm } from "@/context/crm-context";
-import { ProjectPriority } from "@/types/project";
+import type { ProjectPriority } from "@/types/project";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ServiceRequest, ServiceRequestStatus } from "@/types/service-request";
-import { logActivity } from "@/lib/log-activity"; 
+import type { ServiceRequest, ServiceRequestStatus } from "@/types/service-request";
+import {
+  mapActivity,
+  mapProject,
+  mapServiceRequest,
+  upsertById,
+  type ServiceRequestConversionResponse,
+} from "@/lib/crm-record-mappers";
 
 export default function ServiceRequestsPage() {
   const [statusFilter, setStatusFilter] =
@@ -48,11 +54,11 @@ export default function ServiceRequestsPage() {
   const {
   serviceRequests,
   setServiceRequests,
-  projects,
   setProjects,
   clients,
   setActivity,
-  refreshCrmData
+  refreshCrmData,
+  isLoadingCrm
   } = useCrm();
   
   const [clientId, setClientId] = useState("");
@@ -67,6 +73,9 @@ export default function ServiceRequestsPage() {
   const [priority, setPriority] = useState<ProjectPriority>("Medium");
   const [successMessage, setSuccessMessage] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [convertingRequestId, setConvertingRequestId] = useState<string | null>(
+    null
+  );
 
   const filteredRequests = serviceRequests.filter((request) => {
       const matchesSearch =
@@ -79,105 +88,69 @@ export default function ServiceRequestsPage() {
     ) && matchesSearch;
   });
 
+  function resetConvertDialog(message?: string) {
+    setSelectedRequestId("");
+    setPriority("Medium");
+    setDueDate("");
+    setConvertOpen(false);
+
+    if (message) {
+      setSuccessMessage(message);
+    }
+  }
+
   async function handleConvertRequest() {
+    if (convertingRequestId) return;
+
     const request = serviceRequests.find(
       (request) => request.id === selectedRequestId
     );
 
-  if (!request) return;
+    if (!request || request.status === "Converted") return;
 
-  const newProject = {
-    id: crypto.randomUUID(),
-    clientId: request.clientId ?? "",
-    clientName: request.clientName ?? "Unassigned",
-    name: request.title,
-    description: request.description,
-    status: "Planning" as const,
-    priority,
-    progress: 0,
-    startDate: new Date().toISOString().split("T")[0],
-    dueDate,
-    serviceRequestId: request.id,
-  };
+    setConvertingRequestId(request.id);
 
-  const projectResponse = await fetch("/api/projects", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(newProject),
-  });
+    try {
+      const response = await fetch("/api/service-requests/convert", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: request.id,
+          priority,
+          dueDate: dueDate || undefined,
+        }),
+      });
 
-  if (!projectResponse.ok) {
-    console.error("Failed to persist project.");
-    return;
-  }
+      if (!response.ok) {
+        console.error("Failed to convert service request.");
+        return;
+      }
 
-  const projectData = await projectResponse.json();
-  const savedProject = projectData.project;
-  const savedActivity = await logActivity({
-    clientId: savedProject.clientId ?? undefined,
-    projectId: savedProject.id,
-    type: "Project",
-    message: `Created project "${savedProject.name}" from service request.`,
-  });
+      const data = (await response.json()) as ServiceRequestConversionResponse;
+      const savedProject = mapProject(data.project);
+      const savedRequest = mapServiceRequest(data.serviceRequest);
 
-  if (savedActivity) {
-  setActivity((current) => [
-    {
-      id: savedActivity.id,
-      clientId: savedActivity.clientId ?? undefined,
-      projectId: savedActivity.projectId ?? undefined,
-      type: savedActivity.type,
-      message: savedActivity.message,
-      createdAt: savedActivity.createdAt,
-    },
-    ...current,
-  ]);
-}
-  setProjects((current) => [
-    {
-      id: savedProject.id,
-      clientId: savedProject.clientId ?? undefined,
-      clientName: savedProject.clientName,
-      serviceRequestId: savedProject.serviceRequestId ?? undefined,
-      name: savedProject.name,
-      description: savedProject.description,
-      status: savedProject.status,
-      priority: savedProject.priority,
-      progress: savedProject.progress,
-      startDate: savedProject.startDate ?? undefined,
-      dueDate: savedProject.dueDate ?? undefined,
-    },
-    ...current,
-  ]);
+      setProjects((current) => upsertById(current, savedProject));
+      setServiceRequests((current) => upsertById(current, savedRequest));
 
-  setServiceRequests((current) =>
-    current.map((item) =>
-      item.id === request.id ? { ...item, status: "Converted" } : item
-    )
-  );
+      if (data.activity) {
+        const savedActivity = mapActivity(data.activity);
 
-  const response = await fetch("/api/service-requests", {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      id: request.id,
-      status: "Converted",
-    }),
-  });
+        setActivity((current) =>
+          current.some((item) => item.id === savedActivity.id)
+            ? current
+            : [savedActivity, ...current]
+        );
+      }
 
-  if (!response.ok) {
-    console.error("Failed to persist service request status update.");
-  }
-
-  setSelectedRequestId("");
-  setPriority("Medium");
-  setDueDate("");
-  setSuccessMessage(`Request "${request.title}" was converted to a project.`);
-  setConvertOpen(false);  
+      resetConvertDialog(
+        `Request "${request.title}" was converted to a project.`
+      );
+    } finally {
+      setConvertingRequestId(null);
+    }
   }
 
   async function handleAddRequest() {
@@ -233,8 +206,6 @@ export default function ServiceRequestsPage() {
   setOpen(false);
   }
 
-  const [isLoading, setIsLoading] = useState(false);
-
   // async function loadServiceRequests() {
   //   setIsLoading(true);
 
@@ -279,8 +250,6 @@ export default function ServiceRequestsPage() {
 
   return new Date(value).toLocaleDateString();
 }
-  refreshCrmData
- 
   return (
     <>
       <PageActions>
@@ -290,7 +259,7 @@ export default function ServiceRequestsPage() {
         />
         
         <Button variant="outline" onClick={refreshCrmData}>
-          {isLoading ? "Refreshing..." : "Refresh"}
+          {isLoadingCrm ? "Refreshing..." : "Refresh"}
         </Button>
         
 
@@ -480,13 +449,20 @@ export default function ServiceRequestsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={request.status === "Converted"}
+                      disabled={
+                        request.status === "Converted" ||
+                        convertingRequestId === request.id
+                      }
                       onClick={() => {
                         setSelectedRequestId(request.id);
                         setConvertOpen(true);
                       }}
                     >
-                      {request.status === "Converted" ? "Converted" : "Convert"}
+                      {convertingRequestId === request.id
+                        ? "Converting..."
+                        : request.status === "Converted"
+                          ? "Converted"
+                          : "Convert"}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -533,8 +509,12 @@ export default function ServiceRequestsPage() {
         />
       </div>
 
-      <Button className="w-full" onClick={handleConvertRequest}>
-        Create Project
+      <Button
+        className="w-full"
+        onClick={handleConvertRequest}
+        disabled={Boolean(convertingRequestId)}
+      >
+        {convertingRequestId ? "Creating Project..." : "Create Project"}
       </Button>
     </div>
   </DialogContent>

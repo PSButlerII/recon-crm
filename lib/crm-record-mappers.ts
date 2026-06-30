@@ -1,10 +1,16 @@
 import type { Activity } from "@/types/activity";
+import type { Client } from "@/types/client";
 import type { Project } from "@/types/project";
 import type { ServiceRequest } from "@/types/service-request";
 
 export type PersistedActivity = Omit<Activity, "clientId" | "projectId"> & {
   clientId: string | null;
   projectId: string | null;
+};
+
+export type PersistedClient = Omit<Client, "phone" | "lastContacted"> & {
+  phone: string | null;
+  lastContacted: string | null;
 };
 
 export type PersistedProject = Omit<
@@ -43,6 +49,19 @@ export function mapActivity(activity: PersistedActivity): Activity {
     type: activity.type,
     message: activity.message,
     createdAt: activity.createdAt,
+  };
+}
+
+export function mapClient(client: PersistedClient): Client {
+  return {
+    id: client.id,
+    name: client.name,
+    contactName: client.contactName,
+    email: client.email,
+    phone: client.phone ?? undefined,
+    status: client.status,
+    projectCount: client.projectCount,
+    lastContacted: client.lastContacted ?? undefined,
   };
 }
 

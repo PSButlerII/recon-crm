@@ -16,6 +16,10 @@ import type { FileRecord } from "@/types/file-record";
 import type { Activity } from "@/types/activity";
 import type { Quote, Invoice } from "@/types/billing";
 import type { AppSettings } from "@/types/settings";
+import {
+  mapClient,
+  type PersistedClient,
+} from "@/lib/crm-record-mappers";
 
 type CrmContextType = {
   clients: Client[];
@@ -132,7 +136,11 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       }
       
       if (clientsData.clients) {
-        setClients(clientsData.clients);
+        setClients(
+          (clientsData.clients as PersistedClient[]).map((client) =>
+            mapClient(client)
+          )
+        );
       }
       
       if (intakeData.submissions) {

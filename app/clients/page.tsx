@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/page-header";
-import type { Client, ClientStatus } from "@/types/client";
+import type { ClientStatus } from "@/types/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +41,15 @@ import Link from "next/link";
 import { PageActions } from "@/components/page-actions";
 import { useCrm } from "@/context/crm-context";
 import { logActivity } from "@/lib/log-activity";
+import {
+  mapClient,
+  upsertById,
+  type PersistedClient,
+} from "@/lib/crm-record-mappers";
 
+type ClientResponse = {
+  client: PersistedClient;
+};
 
 export default function ClientsPage() {
   const statusVariants = {
@@ -51,7 +59,13 @@ export default function ClientsPage() {
   Archived: "destructive",
 } as const;
 
-  const { clients, setClients, setActivity } = useCrm();
+  const {
+    clients,
+    setClients,
+    setActivity,
+    refreshCrmData,
+    isLoadingCrm,
+  } = useCrm();
   const [open, setOpen] = useState(false);
 
   const [name, setName] = useState("");
@@ -75,12 +89,11 @@ export default function ClientsPage() {
 });
 
   async function handleAddClient() {
-    const newClient: Client = {
-      id: crypto.randomUUID(),
+    const newClient = {
       name,
       contactName,
       email,
-      phone,
+      phone: phone || undefined,
       status,
       projectCount: 0,
       lastContacted: new Date().toISOString().split("T")[0],
@@ -99,22 +112,10 @@ export default function ClientsPage() {
       return;
     }
 
-    const data = await response.json();
-    const savedClient = data.client;
+    const data = (await response.json()) as ClientResponse;
+    const savedClient = mapClient(data.client);
 
-    setClients((current) => [
-      {
-        id: savedClient.id,
-        name: savedClient.name,
-        contactName: savedClient.contactName,
-        email: savedClient.email,
-        phone: savedClient.phone ?? undefined,
-        status: savedClient.status,
-        projectCount: savedClient.projectCount,
-        lastContacted: savedClient.lastContacted ?? undefined,
-      },
-      ...current,
-    ]);
+    setClients((current) => upsertById(current, savedClient));
 
     const savedActivity = await logActivity({
       clientId: savedClient.id,
@@ -123,17 +124,11 @@ export default function ClientsPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) =>
+        current.some((item) => item.id === savedActivity.id)
+          ? current
+          : [savedActivity, ...current]
+      );
     }
 
     setName("");
@@ -151,6 +146,9 @@ export default function ClientsPage() {
           title="Clients"
           description="Manage companies, individuals, and organizations you work with."
         />
+        <Button variant="outline" onClick={refreshCrmData}>
+          {isLoadingCrm ? "Refreshing..." : "Refresh"}
+        </Button>
         <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               placeholder="Search clients..."

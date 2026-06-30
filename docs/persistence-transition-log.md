@@ -39,3 +39,31 @@ At runtime, the conversion endpoint uses `createMany` with `skipDuplicates` insi
 
 - Clean up unrelated lint failures so lint can become a reliable regression gate.
 - Continue moving remaining mock/context-only workflows to persisted APIs.
+
+## 2026-06-30 - Clients Persistence
+
+### Scope
+
+Moved the Clients module fully onto the existing PostgreSQL-backed Prisma API path.
+
+### Changes
+
+- Confirmed `Client` already exists in `prisma/schema.prisma` and matches the app type, including `projectCount`.
+- Confirmed migration `20260522225933_add_clients` already creates the `Client` table.
+- Confirmed shared CRM context initializes `clients` as `[]` and fetches clients from `/api/clients`.
+- Added `PATCH /api/clients` for status and basic client field updates.
+- Added client API payload validation for status and date fields.
+- Added shared `mapClient` normalization for nullable Prisma API fields.
+- Updated `app/clients/page.tsx` to use the saved API client via the shared mapper.
+- Added a Clients page Refresh button using `refreshCrmData`.
+- Kept Add Client activity logging through `logActivity` and updated activity context from the saved activity response.
+
+### Verification
+
+- `.\node_modules\.bin\prisma.cmd migrate status` reported the database schema is up to date.
+- `npm run build` passed after the client API/page/context changes.
+- `npm run lint` still has unrelated pre-existing failures in intake, project detail, settings, and CRM context.
+
+### Remaining Work
+
+- Add edit/status UI actions that call `PATCH /api/clients`.

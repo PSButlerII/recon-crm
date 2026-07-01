@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireApiAuth } from "@/lib/auth/require-auth";
+
+const SETTINGS_KEY = "default";
 
 const SETTINGS_KEY = "default";
 
@@ -30,6 +33,11 @@ async function getOrCreateSettings() {
 }
 
 export async function GET() {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const settings = await getOrCreateSettings();
 
@@ -48,6 +56,11 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const payload = (await request.json()) as UpdateSettingsPayload;
 

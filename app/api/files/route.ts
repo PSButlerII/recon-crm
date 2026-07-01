@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { FileRecordType } from "@/types/file-record";
+import { requireApiAuth } from "@/lib/auth/require-auth";
 
 type CreateFilePayload = {
   clientId?: string;
@@ -14,6 +15,11 @@ type CreateFilePayload = {
 };
 
 export async function GET() {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const files = await prisma.fileRecord.findMany({
       orderBy: {
@@ -36,6 +42,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const payload = (await request.json()) as CreateFilePayload;
 

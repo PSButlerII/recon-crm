@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { ClientStatus } from "@/types/client";
+import { requireApiAuth } from "@/lib/auth/require-auth";
 
 const CLIENT_STATUSES: ClientStatus[] = [
   "Lead",
@@ -47,6 +48,11 @@ function parseOptionalDate(value?: string | null) {
 }
 
 export async function GET() {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const clients = await prisma.client.findMany({
       orderBy: {
@@ -69,6 +75,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const payload = (await request.json()) as CreateClientPayload;
 
@@ -124,6 +135,11 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const payload = (await request.json()) as UpdateClientPayload;
 

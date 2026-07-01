@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { ServiceRequestStatus } from "@/types/service-request";
+import { requireApiAuth } from "@/lib/auth/require-auth";
 
 type CreateServiceRequestPayload = {
   intakeSubmissionId?: string;
@@ -36,6 +37,11 @@ function optionalString(value?: string) {
 }
 
 export async function GET() {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const serviceRequests = await prisma.serviceRequest.findMany({
       orderBy: {
@@ -58,6 +64,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const payload = (await request.json()) as CreateServiceRequestPayload;
     const intakeSubmissionId = optionalString(payload.intakeSubmissionId);
@@ -167,6 +178,11 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const body = await request.json();
 

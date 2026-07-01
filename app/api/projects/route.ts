@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireApiAuth } from "@/lib/auth/require-auth";
 
 type CreateProjectPayload = {
   clientId?: string;
@@ -30,6 +31,11 @@ function buildProjectData(payload: CreateProjectPayload) {
 }
 
 export async function GET() {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const projects = await prisma.project.findMany({
       orderBy: {
@@ -52,6 +58,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const payload = (await request.json()) as CreateProjectPayload;
 
@@ -145,6 +156,11 @@ type UpdateProjectPayload = {
 };
 
 export async function PATCH(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const body = (await request.json()) as UpdateProjectPayload;
     const { id, status, progress } = body;

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { ProjectPriority } from "@/types/project";
+import { requireApiAuth } from "@/lib/auth/require-auth";
 
 const PROJECT_PRIORITIES: ProjectPriority[] = [
   "Low",
@@ -50,6 +51,11 @@ function parseOptionalDate(value?: string | null) {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const payload = (await request.json()) as ConvertServiceRequestPayload;
 

@@ -11,12 +11,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCrm } from "@/context/crm-context";
-import { useState,useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
   const { settings, setSettings, refreshCrmData } = useCrm();
 
+  return (
+    <SettingsForm
+      key={settings?.id ?? "default-settings"}
+      settings={settings}
+      setSettings={setSettings}
+      refreshCrmData={refreshCrmData}
+    />
+  );
+}
+
+type SettingsFormProps = {
+  settings: ReturnType<typeof useCrm>["settings"];
+  setSettings: ReturnType<typeof useCrm>["setSettings"];
+  refreshCrmData: ReturnType<typeof useCrm>["refreshCrmData"];
+};
+
+function SettingsForm({ settings, setSettings, refreshCrmData }: SettingsFormProps) {
   const [businessName, setBusinessName] = useState(
     settings?.businessName ?? "Recon Dev LLC"
   );
@@ -32,16 +49,6 @@ export default function SettingsPage() {
   const [paymentTerms, setPaymentTerms] = useState(
     settings?.paymentTerms ?? "Due on receipt"
   );
-
-  useEffect(() => {
-    if (!settings) return;
-
-    setBusinessName(settings.businessName);
-    setDefaultEmail(settings.defaultEmail ?? "");
-    setDefaultHourlyRate(settings.defaultHourlyRate.toString());
-    setDefaultCurrency(settings.defaultCurrency);
-    setPaymentTerms(settings.paymentTerms);
-  }, [settings]);
 
   async function handleSaveSettings() {
     const response = await fetch("/api/settings", {

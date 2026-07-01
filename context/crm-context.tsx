@@ -19,9 +19,13 @@ import type { AppSettings } from "@/types/settings";
 import {
   mapClient,
   mapIntakeSubmission,
+  mapInvoice,
+  mapQuote,
   mapServiceRequest,
   type PersistedClient,
   type PersistedIntakeSubmission,
+  type PersistedInvoice,
+  type PersistedQuote,
   type PersistedServiceRequest,
 } from "@/lib/crm-record-mappers";
 
@@ -132,7 +136,11 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       ]);
 
       if (invoicesData.invoices) {
-        setInvoices(invoicesData.invoices);
+        setInvoices(
+          (invoicesData.invoices as PersistedInvoice[]).map((invoice) =>
+            mapInvoice(invoice)
+          )
+        );
       }
 
       if (settingsData.settings) {
@@ -180,7 +188,11 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       }
 
       if (quotesData.quotes) {
-        setQuotes(quotesData.quotes);
+        setQuotes(
+          (quotesData.quotes as PersistedQuote[]).map((quote) =>
+            mapQuote(quote)
+          )
+        );
       }
       
       } catch (error) {
@@ -191,7 +203,9 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    refreshCrmData();
+    void (async () => {
+      await refreshCrmData();
+    })();
   }, []);
   
   return (

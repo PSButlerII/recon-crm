@@ -29,8 +29,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogDescription
+  DialogTrigger
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -40,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { logActivity } from "@/lib/log-activity";
+import { mapInvoice, mapQuote, upsertById, type PersistedInvoice, type PersistedQuote } from "@/lib/crm-record-mappers";
 
 export default function QuotesPage() {
   
@@ -51,6 +51,8 @@ export default function QuotesPage() {
   invoices,
   setInvoices,
   setActivity,
+  refreshCrmData,
+  isLoadingCrm,
 } = useCrm();
 
   const [open, setOpen] = useState(false);
@@ -89,7 +91,8 @@ export default function QuotesPage() {
       projectName: project?.name,
       title,
       status: "Draft" as const,
-      amount: Number(amount || 0),      
+      amount: Number(amount || 0),
+      issuedDate,
       validUntil,
     };
 
@@ -109,21 +112,9 @@ export default function QuotesPage() {
     const data = await response.json();
     const savedQuote = data.quote;
 
-    setQuotes((current) => [
-      {
-        id: savedQuote.id,
-        clientId: savedQuote.clientId ?? undefined,
-        clientName: savedQuote.clientName,
-        projectId: savedQuote.projectId ?? undefined,
-        projectName: savedQuote.projectName ?? undefined,
-        title: savedQuote.title,
-        status: savedQuote.status,
-        amount: savedQuote.amount,
-        issuedDate: savedQuote.issuedDate ?? undefined,
-        validUntil: savedQuote.validUntil ?? undefined,        
-      },
-      ...current,
-    ]);
+    setQuotes((current) =>
+      upsertById(current, mapQuote(savedQuote as PersistedQuote))
+    );
 
     const savedActivity = await logActivity({
       clientId: savedQuote.clientId ?? undefined,
@@ -150,7 +141,8 @@ export default function QuotesPage() {
     setProjectId("");
     setTitle("");
     setAmount("");
-    setValidUntil("");    
+    setIssuedDate("");
+    setValidUntil("");
     setOpen(false);
   }
 
@@ -296,23 +288,9 @@ export default function QuotesPage() {
     const data = await response.json();
     const savedInvoice = data.invoice;
 
-    setInvoices((current) => [
-      {
-        id: savedInvoice.id,
-        quoteId: savedInvoice.quoteId ?? undefined,
-        clientId: savedInvoice.clientId ?? undefined,
-        clientName: savedInvoice.clientName,
-        projectId: savedInvoice.projectId ?? undefined,
-        projectName: savedInvoice.projectName ?? undefined,
-        title: savedInvoice.title,
-        status: savedInvoice.status,
-        amount: savedInvoice.amount,
-        issuedDate: savedInvoice.issuedDate ?? undefined,
-        dueDate: savedInvoice.dueDate ?? undefined,
-        paidDate: savedInvoice.paidDate ?? undefined,
-      },
-      ...current,
-    ]);
+    setInvoices((current) =>
+      upsertById(current, mapInvoice(savedInvoice as PersistedInvoice))
+    );
 
     const savedActivity = await logActivity({
       clientId: savedInvoice.clientId ?? undefined,
@@ -363,6 +341,10 @@ export default function QuotesPage() {
           title="Quotes"
           description="Track proposed work, estimates, and accepted offers."
         />
+
+        <Button variant="outline" onClick={refreshCrmData}>
+          {isLoadingCrm ? "Refreshing..." : "Refresh"}
+        </Button>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>

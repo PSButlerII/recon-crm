@@ -1,6 +1,6 @@
 "use client";
 
-import { useState,useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -148,7 +148,7 @@ export default function TasksPage() {
       setSuccessMessage(`Task "${title}" was added.`);
       setOpen(false);
   }
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
 
 function formatDate(value?: string) {
   if (!value) return "—";
@@ -156,7 +156,6 @@ function formatDate(value?: string) {
   return new Date(value).toLocaleDateString();
 }
  
-refreshCrmData
   return (
     <>
       <PageActions>

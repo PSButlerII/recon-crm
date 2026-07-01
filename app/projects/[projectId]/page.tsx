@@ -67,6 +67,16 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const { projectId } = use(params);
   const project = projects.find((item) => item.id === projectId);
 
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteBody, setNoteBody] = useState("");
+  const [noteType, setNoteType] = useState<NoteType>("General");
+
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [taskStatus, setTaskStatus] = useState<TaskStatus>("Todo");
+  const [taskPriority, setTaskPriority] = useState<TaskPriority>("Medium");
+  const [taskDueDate, setTaskDueDate] = useState("");
+
   if (isLoadingCrm) {
     return <div>Loading project...</div>;
   }
@@ -93,16 +103,6 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     (request) => request.id === project.serviceRequestId
   );
   
-  const [noteTitle, setNoteTitle] = useState("");
-  const [noteBody, setNoteBody] = useState("");
-  const [noteType, setNoteType] = useState<NoteType>("General");
-
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskDescription, setTaskDescription] = useState("");
-  const [taskStatus, setTaskStatus] = useState<TaskStatus>("Todo");
-  const [taskPriority, setTaskPriority] = useState<TaskPriority>("Medium");
-  const [taskDueDate, setTaskDueDate] = useState("");
-
   const completedTasks = projectTasks.filter((task) => task.status === "Done");
 
   const calculatedProgress = projectTasks.length > 0
@@ -343,10 +343,6 @@ function formatDate(value?: string) {
 
   return new Date(value).toLocaleDateString();
 }
-  if (!project) {
-    notFound();
-  }
-
   return (
     <>
       <div className="mb-6">

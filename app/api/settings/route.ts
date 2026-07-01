@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+const SETTINGS_KEY = "default";
+
 type UpdateSettingsPayload = {
   businessName?: string;
   defaultEmail?: string;
@@ -9,18 +11,21 @@ type UpdateSettingsPayload = {
   paymentTerms?: string;
 };
 
+const defaultSettings = {
+  key: SETTINGS_KEY,
+  businessName: "Recon Dev LLC",
+  defaultHourlyRate: 35,
+  defaultCurrency: "USD",
+  paymentTerms: "Due on receipt",
+};
+
 async function getOrCreateSettings() {
-  const existing = await prisma.appSettings.findFirst();
-
-  if (existing) return existing;
-
-  return prisma.appSettings.create({
-    data: {
-      businessName: "Recon Dev LLC",
-      defaultHourlyRate: 35,
-      defaultCurrency: "USD",
-      paymentTerms: "Due on receipt",
+  return prisma.appSettings.upsert({
+    where: {
+      key: SETTINGS_KEY,
     },
+    update: {},
+    create: defaultSettings,
   });
 }
 
@@ -46,11 +51,11 @@ export async function PATCH(request: Request) {
   try {
     const payload = (await request.json()) as UpdateSettingsPayload;
 
-    const settings = await getOrCreateSettings();
+    await getOrCreateSettings();
 
-    const updated = await prisma.appSettings.update({
+    const settings = await prisma.appSettings.update({
       where: {
-        id: settings.id,
+        key: SETTINGS_KEY,
       },
       data: {
         ...(payload.businessName !== undefined && {
@@ -73,7 +78,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      settings: updated,
+      settings,
     });
   } catch (error) {
     console.error("Settings PATCH error:", error);

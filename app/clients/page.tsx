@@ -80,7 +80,6 @@ export default function ClientsPage() {
     clients,
     projects,
     setClients,
-    projects,
     setActivity,
     refreshCrmData,
     isLoadingCrm,

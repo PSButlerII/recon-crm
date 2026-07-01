@@ -78,6 +78,7 @@ export default function ClientsPage() {
 
   const {
     clients,
+    projects,
     setClients,
     projects,
     setActivity,
@@ -105,6 +106,10 @@ export default function ClientsPage() {
   const [editStatus, setEditStatus] = useState<ClientStatus>("Lead");
   const [editLastContacted, setEditLastContacted] = useState("");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  function getDerivedProjectCount(clientId: string) {
+    return projects.filter((project) => project.clientId === clientId).length;
+  }
 
   const filteredClients = clients.filter((client) => {
   const matchesSearch =
@@ -268,7 +273,6 @@ export default function ClientsPage() {
       email,
       phone: phone || undefined,
       status,
-      projectCount: 0,
       lastContacted: new Date().toISOString().split("T")[0],
     };
 
@@ -491,7 +495,7 @@ export default function ClientsPage() {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>{clientProjectCount}</TableCell>
+                  <TableCell>{getDerivedProjectCount(client.id)}</TableCell>
                   <TableCell>
                     <Button
                       variant="outline"

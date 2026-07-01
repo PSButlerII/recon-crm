@@ -221,14 +221,6 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      if (filesData.files) {
-        setFiles(
-          (filesData.files as PersistedFileRecord[]).map((file) =>
-            mapFileRecord(file)
-          )
-        );
-      }
-
       if (quotesData.quotes) {
         setQuotes(
           (quotesData.quotes as PersistedQuote[]).map((quote) =>

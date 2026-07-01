@@ -79,6 +79,7 @@ export default function ClientsPage() {
   const {
     clients,
     setClients,
+    projects,
     setActivity,
     refreshCrmData,
     isLoadingCrm,
@@ -448,7 +449,12 @@ export default function ClientsPage() {
             </TableHeader>
 
             <TableBody>
-              {filteredClients.map((client) => (
+              {filteredClients.map((client) => {
+              const clientProjectCount = projects.filter(
+                (project) => project.clientId === client.id
+              ).length;
+
+              return (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">
                     <Link href={`/clients/${client.id}`} className="hover:underline">
@@ -485,7 +491,7 @@ export default function ClientsPage() {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>{client.projectCount}</TableCell>
+                  <TableCell>{clientProjectCount}</TableCell>
                   <TableCell>
                     <Button
                       variant="outline"
@@ -497,7 +503,8 @@ export default function ClientsPage() {
                   </TableCell>
                   <TableCell>{client.lastContacted ?? "—"}</TableCell>
                 </TableRow>
-              ))}
+  );
+})}
             </TableBody>
           </Table>
         </CardContent>

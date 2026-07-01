@@ -18,11 +18,13 @@ import type { Quote, Invoice } from "@/types/billing";
 import type { AppSettings } from "@/types/settings";
 import {
   mapClient,
+  mapFileRecord,
   mapIntakeSubmission,
   mapInvoice,
   mapQuote,
   mapServiceRequest,
   type PersistedClient,
+  type PersistedFileRecord,
   type PersistedIntakeSubmission,
   type PersistedInvoice,
   type PersistedQuote,
@@ -96,6 +98,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksResponse,
         notesResponse,
         activityResponse,
+        filesResponse,
         quotesResponse,
         invoicesResponse,
       ] = await Promise.all([
@@ -107,6 +110,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         fetch("/api/tasks"),
         fetch("/api/notes"),
         fetch("/api/activity"),
+        fetch("/api/files"),
         fetch("/api/quotes"),
         fetch("/api/invoices"),
       ]);
@@ -120,6 +124,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksData,
         notesData,
         activityData,
+        filesData,
         quotesData,
         invoicesData,
       ] = await Promise.all([
@@ -131,6 +136,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksResponse.json(),
         notesResponse.json(),
         activityResponse.json(),
+        filesResponse.json(),
         quotesResponse.json(),
         invoicesResponse.json(),
       ]);
@@ -185,6 +191,14 @@ export function CrmProvider({ children }: { children: ReactNode }) {
 
       if (activityData.activity) {
         setActivity(activityData.activity);
+      }
+
+      if (filesData.files) {
+        setFiles(
+          (filesData.files as PersistedFileRecord[]).map((file) =>
+            mapFileRecord(file)
+          )
+        );
       }
 
       if (quotesData.quotes) {

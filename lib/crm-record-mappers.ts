@@ -3,6 +3,7 @@ import type { Client } from "@/types/client";
 import type { IntakeSubmission } from "@/types/intake-submission";
 import type { Project } from "@/types/project";
 import type { Invoice, Quote } from "@/types/billing";
+import type { FileRecord } from "@/types/file-record";
 import type { ServiceRequest } from "@/types/service-request";
 
 export type PersistedActivity = Omit<Activity, "clientId" | "projectId"> & {
@@ -38,6 +39,18 @@ export type PersistedInvoice = Omit<
   issuedDate: string | null;
   dueDate: string | null;
   paidDate: string | null;
+};
+
+
+export type PersistedFileRecord = Omit<
+  FileRecord,
+  "clientId" | "clientName" | "projectId" | "projectName" | "uploadedAt"
+> & {
+  clientId: string | null;
+  clientName: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  uploadedAt: string;
 };
 
 export type PersistedIntakeSubmission = Omit<
@@ -114,6 +127,21 @@ export function mapClient(client: PersistedClient): Client {
     status: client.status,
     projectCount: client.projectCount,
     lastContacted: client.lastContacted ?? undefined,
+  };
+}
+
+
+export function mapFileRecord(file: PersistedFileRecord): FileRecord {
+  return {
+    id: file.id,
+    clientId: file.clientId ?? undefined,
+    clientName: file.clientName ?? undefined,
+    projectId: file.projectId ?? undefined,
+    projectName: file.projectName ?? undefined,
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    uploadedAt: file.uploadedAt,
   };
 }
 

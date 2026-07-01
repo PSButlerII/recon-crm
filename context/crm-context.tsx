@@ -18,10 +18,16 @@ import type { Quote, Invoice } from "@/types/billing";
 import type { AppSettings } from "@/types/settings";
 import {
   mapClient,
+  mapFileRecord,
   mapIntakeSubmission,
+  mapInvoice,
+  mapQuote,
   mapServiceRequest,
   type PersistedClient,
+  type PersistedFileRecord,
   type PersistedIntakeSubmission,
+  type PersistedInvoice,
+  type PersistedQuote,
   type PersistedServiceRequest,
 } from "@/lib/crm-record-mappers";
 
@@ -92,6 +98,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksResponse,
         notesResponse,
         activityResponse,
+        filesResponse,
         quotesResponse,
         invoicesResponse,
       ] = await Promise.all([
@@ -103,6 +110,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         fetch("/api/tasks"),
         fetch("/api/notes"),
         fetch("/api/activity"),
+        fetch("/api/files"),
         fetch("/api/quotes"),
         fetch("/api/invoices"),
       ]);
@@ -116,6 +124,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksData,
         notesData,
         activityData,
+        filesData,
         quotesData,
         invoicesData,
       ] = await Promise.all([
@@ -127,12 +136,17 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksResponse.json(),
         notesResponse.json(),
         activityResponse.json(),
+        filesResponse.json(),
         quotesResponse.json(),
         invoicesResponse.json(),
       ]);
 
       if (invoicesData.invoices) {
-        setInvoices(invoicesData.invoices);
+        setInvoices(
+          (invoicesData.invoices as PersistedInvoice[]).map((invoice) =>
+            mapInvoice(invoice)
+          )
+        );
       }
 
       if (settingsData.settings) {
@@ -179,8 +193,20 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         setActivity(activityData.activity);
       }
 
+      if (filesData.files) {
+        setFiles(
+          (filesData.files as PersistedFileRecord[]).map((file) =>
+            mapFileRecord(file)
+          )
+        );
+      }
+
       if (quotesData.quotes) {
-        setQuotes(quotesData.quotes);
+        setQuotes(
+          (quotesData.quotes as PersistedQuote[]).map((quote) =>
+            mapQuote(quote)
+          )
+        );
       }
       
       } catch (error) {
@@ -191,7 +217,9 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    refreshCrmData();
+    void (async () => {
+      await refreshCrmData();
+    })();
   }, []);
   
   return (

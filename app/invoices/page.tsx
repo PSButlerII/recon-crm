@@ -22,6 +22,12 @@ import { useState } from "react";
 import { PageActions } from "@/components/page-actions";
 import { useCrm } from "@/context/crm-context";
 import { logActivity } from "@/lib/log-activity";
+import {
+  mapInvoice,
+  prependActivity,
+  upsertMappedById,
+  type PersistedInvoice,
+} from "@/lib/crm-record-mappers";
 import type { BillingStatus, Invoice } from "@/types/billing";
 import { Input } from "@/components/ui/input";
 import {
@@ -61,6 +67,8 @@ export default function InvoicesPage() {
     clients,
     projects,
     setActivity,
+    refreshCrmData,
+    isLoadingCrm,
   } = useCrm();
 
   const filteredInvoices = invoices.filter((invoice) => {
@@ -137,23 +145,9 @@ export default function InvoicesPage() {
     const data = await response.json();
     const savedInvoice = data.invoice;
 
-    setInvoices((current) => [
-      {
-        id: savedInvoice.id,
-        quoteId: savedInvoice.quoteId ?? undefined,
-        clientId: savedInvoice.clientId ?? undefined,
-        clientName: savedInvoice.clientName,
-        projectId: savedInvoice.projectId ?? undefined,
-        projectName: savedInvoice.projectName ?? undefined,
-        title: savedInvoice.title,
-        status: savedInvoice.status,
-        amount: savedInvoice.amount,
-        issuedDate: savedInvoice.issuedDate ?? undefined,
-        dueDate: savedInvoice.dueDate ?? undefined,
-        paidDate: savedInvoice.paidDate ?? undefined,
-      },
-      ...current,
-    ]);
+    setInvoices((current) =>
+      upsertMappedById(current, savedInvoice as PersistedInvoice, mapInvoice)
+    );
     const savedActivity = await logActivity({
       clientId: savedInvoice.clientId ?? undefined,
       projectId: savedInvoice.projectId ?? undefined,
@@ -162,17 +156,7 @@ export default function InvoicesPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
     setOpen(false);
     setClientId("");
@@ -222,17 +206,7 @@ export default function InvoicesPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
   }
 
@@ -276,17 +250,7 @@ export default function InvoicesPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
   }
 
@@ -311,6 +275,10 @@ export default function InvoicesPage() {
           title="Invoices"
           description="Track billable work, payment status, and due dates."
         />
+
+        <Button variant="outline" onClick={refreshCrmData}>
+          {isLoadingCrm ? "Refreshing..." : "Refresh"}
+        </Button>
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input

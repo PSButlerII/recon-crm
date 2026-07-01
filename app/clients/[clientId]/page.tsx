@@ -32,9 +32,7 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
   const {
   clients,
   projects,
-  tasks,
   notes,
-  serviceRequests,
   files,
   activity,
   quotes,
@@ -56,13 +54,9 @@ export default function ClientDetailPage({ params }: ClientDetailPageProps) {
     (project) => project.clientId === clientId
   );
 
-  const clientTasks = tasks.filter((task) => task.clientId === clientId);
 
   const clientNotes = notes.filter((note) => note.clientId === clientId);
 
-  const clientRequests = serviceRequests.filter(
-    (request) => request.clientId === clientId
-  );
 
   const clientActivity = activity.filter(
     (activity) => activity.clientId === clientId

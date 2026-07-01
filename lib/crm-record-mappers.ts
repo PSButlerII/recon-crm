@@ -1,5 +1,6 @@
 import type { Activity } from "@/types/activity";
 import type { Client } from "@/types/client";
+import type { IntakeSubmission } from "@/types/intake-submission";
 import type { Project } from "@/types/project";
 import type { ServiceRequest } from "@/types/service-request";
 
@@ -11,6 +12,25 @@ export type PersistedActivity = Omit<Activity, "clientId" | "projectId"> & {
 export type PersistedClient = Omit<Client, "phone" | "lastContacted"> & {
   phone: string | null;
   lastContacted: string | null;
+};
+
+export type PersistedIntakeSubmission = Omit<
+  IntakeSubmission,
+  | "phone"
+  | "company"
+  | "blocker"
+  | "budget"
+  | "timeline"
+  | "preferredContact"
+  | "message"
+> & {
+  phone: string | null;
+  company: string | null;
+  blocker: string | null;
+  budget: string | null;
+  timeline: string | null;
+  preferredContact: string | null;
+  message: string | null;
 };
 
 export type PersistedProject = Omit<
@@ -41,6 +61,12 @@ export type ServiceRequestConversionResponse = {
   activity: PersistedActivity | null;
 };
 
+export type CreateServiceRequestResponse = {
+  ok: true;
+  duplicate?: boolean;
+  serviceRequest: PersistedServiceRequest;
+};
+
 export function mapActivity(activity: PersistedActivity): Activity {
   return {
     id: activity.id,
@@ -62,6 +88,30 @@ export function mapClient(client: PersistedClient): Client {
     status: client.status,
     projectCount: client.projectCount,
     lastContacted: client.lastContacted ?? undefined,
+  };
+}
+
+export function mapIntakeSubmission(
+  submission: PersistedIntakeSubmission
+): IntakeSubmission {
+  return {
+    id: submission.id,
+    inquiryId: submission.inquiryId,
+    source: submission.source,
+    name: submission.name,
+    email: submission.email,
+    phone: submission.phone ?? "",
+    company: submission.company ?? undefined,
+    projectType: submission.projectType,
+    goal: submission.goal,
+    blocker: submission.blocker ?? undefined,
+    budget: submission.budget ?? undefined,
+    timeline: submission.timeline ?? undefined,
+    preferredContact: submission.preferredContact ?? undefined,
+    message: submission.message ?? undefined,
+    submittedAt: submission.submittedAt,
+    status: submission.status,
+    priority: submission.priority,
   };
 }
 

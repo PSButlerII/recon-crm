@@ -18,7 +18,11 @@ import type { Quote, Invoice } from "@/types/billing";
 import type { AppSettings } from "@/types/settings";
 import {
   mapClient,
+  mapIntakeSubmission,
+  mapServiceRequest,
   type PersistedClient,
+  type PersistedIntakeSubmission,
+  type PersistedServiceRequest,
 } from "@/lib/crm-record-mappers";
 
 type CrmContextType = {
@@ -144,11 +148,19 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       }
       
       if (intakeData.submissions) {
-        setIntakeSubmissions(intakeData.submissions);
+        setIntakeSubmissions(
+          (intakeData.submissions as PersistedIntakeSubmission[]).map(
+            (submission) => mapIntakeSubmission(submission)
+          )
+        );
       }
 
       if (requestsData.serviceRequests) {
-        setServiceRequests(requestsData.serviceRequests);
+        setServiceRequests(
+          (requestsData.serviceRequests as PersistedServiceRequest[]).map(
+            (request) => mapServiceRequest(request)
+          )
+        );
       }
 
       if (projectsData.projects) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { ServiceRequestStatus } from "@/types/service-request";
 
 type CreateServiceRequestPayload = {
   intakeSubmissionId?: string;
@@ -8,9 +9,31 @@ type CreateServiceRequestPayload = {
   title: string;
   description: string;
   category: string;
-  status?: "New" | "Reviewing" | "Quoted" | "Approved" | "Declined" | "Converted";
+  status?: ServiceRequestStatus;
   requestedAt: string;
 };
+
+const SERVICE_REQUEST_STATUSES: ServiceRequestStatus[] = [
+  "New",
+  "Reviewing",
+  "Quoted",
+  "Approved",
+  "Declined",
+  "Converted",
+];
+
+function isServiceRequestStatus(value: unknown): value is ServiceRequestStatus {
+  return (
+    typeof value === "string" &&
+    SERVICE_REQUEST_STATUSES.includes(value as ServiceRequestStatus)
+  );
+}
+
+function optionalString(value?: string) {
+  const trimmed = value?.trim();
+
+  return trimmed ? trimmed : undefined;
+}
 
 export async function GET() {
   try {
@@ -37,6 +60,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as CreateServiceRequestPayload;
+    const intakeSubmissionId = optionalString(payload.intakeSubmissionId);
+    const requestedAt = new Date(payload.requestedAt);
 
     if (
       !payload.title ||
@@ -50,22 +75,83 @@ export async function POST(request: Request) {
       );
     }
 
+    if (Number.isNaN(requestedAt.getTime())) {
+      return NextResponse.json(
+        { error: "Invalid requestedAt date." },
+        { status: 400 }
+      );
+    }
+
+    const data = {
+      intakeSubmissionId,
+      clientId: optionalString(payload.clientId),
+      clientName: optionalString(payload.clientName),
+      title: payload.title,
+      description: payload.description,
+      category: payload.category,
+      status: isServiceRequestStatus(payload.status) ? payload.status : "New",
+      requestedAt,
+    };
+
+    if (intakeSubmissionId) {
+      const existing = await prisma.serviceRequest.findFirst({
+        where: {
+          intakeSubmissionId,
+        },
+      });
+
+      if (existing) {
+        return NextResponse.json({
+          ok: true,
+          duplicate: true,
+          serviceRequest: existing,
+        });
+      }
+
+      const createResult = await prisma.serviceRequest.createMany({
+        data,
+        skipDuplicates: true,
+      });
+
+      const serviceRequest = await prisma.serviceRequest.findFirst({
+        where: {
+          intakeSubmissionId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      if (!serviceRequest) {
+        throw new Error("Service request creation failed.");
+      }
+
+      return NextResponse.json(
+        {
+          ok: true,
+          duplicate: createResult.count === 0,
+          serviceRequest,
+        },
+        { status: createResult.count === 1 ? 201 : 200 }
+      );
+    }
+
     const serviceRequest = await prisma.serviceRequest.create({
       data: {
-        intakeSubmissionId: payload.intakeSubmissionId,
-        clientId: payload.clientId,
-        clientName: payload.clientName,
         title: payload.title,
         description: payload.description,
         category: payload.category,
-        status: payload.status ?? "New",
-        requestedAt: new Date(payload.requestedAt),
+        status: data.status,
+        requestedAt,
+        clientId: data.clientId,
+        clientName: data.clientName,
       },
     });
 
     return NextResponse.json(
       {
         ok: true,
+        duplicate: false,
         serviceRequest,
       },
       { status: 201 }
@@ -86,7 +172,7 @@ export async function PATCH(request: Request) {
 
     const { id, status } = body as {
       id?: string;
-      status?: "New" | "Reviewing" | "Quoted" | "Approved" | "Declined" | "Converted";
+      status?: ServiceRequestStatus;
     };
 
     if (!id || !status) {

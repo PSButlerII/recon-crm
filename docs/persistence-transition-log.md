@@ -1,5 +1,41 @@
 # CRM Persistence Transition Log
 
+## 2026-07-01 - Intake to Service Request Idempotency
+
+### Scope
+
+Made Intake to Service Request conversion converge on one persisted service request per intake submission.
+
+### Changes
+
+- Added a nullable unique guard to `ServiceRequest.intakeSubmissionId`.
+- Added migration `20260701000000_unique_service_request_intake_submission`.
+- Updated `POST /api/service-requests` to return an existing request with `duplicate: true` when an intake conversion has already created one.
+- Kept manual service requests without `intakeSubmissionId` working normally.
+- Updated the intake list and intake detail conversion flows to:
+  - Use the saved or duplicate service request returned by the API.
+  - Upsert service request context through the shared mapper.
+  - Patch the intake submission to `Converted` and update context from the saved response.
+  - Log conversion activity only when the service request was newly created.
+- Added shared persisted intake mapping and used it during CRM refresh.
+
+### Duplicate Handling
+
+The migration clears duplicate `intakeSubmissionId` values from older service request rows before creating the unique index. PostgreSQL allows multiple `NULL` values in a unique index, so manually created service requests remain unaffected.
+
+### Verification
+
+- `.\node_modules\.bin\prisma.cmd generate` completed successfully.
+- `npm run build` passed after the intake conversion and API changes.
+- `.\node_modules\.bin\prisma.cmd migrate deploy` applied `20260701000000_unique_service_request_intake_submission` to PostgreSQL database `recon_crm`.
+- `.\node_modules\.bin\prisma.cmd migrate status` reported the database schema is up to date.
+- `git diff --check` passed with CRLF normalization warnings only.
+- `npm run lint` still has unrelated pre-existing failures in project detail, settings, and CRM context, plus existing warnings in clients detail, notes, projects, quotes, and tasks.
+
+### Remaining Work
+
+- Move the next conversion or billing workflow to the same atomic/idempotent API pattern.
+
 ## 2026-06-30 - Service Request to Project Conversion
 
 ### Scope

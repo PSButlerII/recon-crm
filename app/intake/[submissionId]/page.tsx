@@ -1,11 +1,12 @@
 "use client";
+
+import { use, useState } from "react";
 import Link from "next/link";
-import { use } from "react";
 import { ArrowLeft } from "lucide-react";
-import { useCrm } from "@/context/crm-context";
+
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,7 +14,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useCrm } from "@/context/crm-context";
+import {
+  mapIntakeSubmission,
+  mapServiceRequest,
+  upsertById,
+  type CreateServiceRequestResponse,
+  type PersistedIntakeSubmission,
+} from "@/lib/crm-record-mappers";
 import { logActivity } from "@/lib/log-activity";
+import type { IntakeSubmissionStatus } from "@/types/intake-submission";
 
 type IntakeDetailPageProps = {
   params: Promise<{
@@ -21,17 +31,29 @@ type IntakeDetailPageProps = {
   }>;
 };
 
+type IntakePatchResponse = {
+  submission?: PersistedIntakeSubmission;
+  error?: string;
+};
 
+type ServiceRequestPostResponse = CreateServiceRequestResponse & {
+  error?: string;
+};
 
-export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
-
-  const statusVariants = {
+const statusVariants = {
   New: "secondary",
   Reviewed: "default",
   Converted: "outline",
   Ignored: "destructive",
-  } as const;
+} as const;
 
+function formatDate(value?: string) {
+  if (!value) return "-";
+
+  return new Date(value).toLocaleDateString();
+}
+
+export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
   const { submissionId } = use(params);
 
   const {
@@ -39,145 +61,149 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
     setIntakeSubmissions,
     setServiceRequests,
     setActivity,
-    isLoadingCrm
+    isLoadingCrm,
   } = useCrm();
+
+  const [isConverting, setIsConverting] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const submission = intakeSubmissions.find(
     (item) => item.id === submissionId
   );
 
+  async function handleConvertToRequest() {
+    if (isConverting) return;
 
-  if(isLoadingCrm){
-    return <div>Loading intake submissions...</div>
+    const currentSubmission = intakeSubmissions.find(
+      (item) => item.id === submissionId
+    );
+
+    if (!currentSubmission || currentSubmission.status === "Converted") {
+      return;
+    }
+
+    const requestTitle = `${
+      currentSubmission.projectType || "General Inquiry"
+    } Request`;
+
+    setIsConverting(true);
+
+    try {
+      const createResponse = await fetch("/api/service-requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          intakeSubmissionId: currentSubmission.id,
+          clientName: currentSubmission.company || currentSubmission.name,
+          title: requestTitle,
+          description:
+            currentSubmission.message ||
+            currentSubmission.goal ||
+            "No description provided.",
+          category: currentSubmission.projectType || "General",
+          status: "New",
+          requestedAt: currentSubmission.submittedAt,
+        }),
+      });
+      const createData =
+        (await createResponse.json()) as ServiceRequestPostResponse;
+
+      if (!createResponse.ok) {
+        console.error(
+          createData.error || "Failed to persist service request."
+        );
+        return;
+      }
+
+      const savedRequest = mapServiceRequest(createData.serviceRequest);
+
+      setServiceRequests((current) => upsertById(current, savedRequest));
+
+      const intakeResponse = await fetch("/api/intake", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: currentSubmission.id,
+          status: "Converted",
+        }),
+      });
+      const intakeData = (await intakeResponse.json()) as IntakePatchResponse;
+
+      if (!intakeResponse.ok || !intakeData.submission) {
+        console.error(
+          intakeData.error || "Failed to persist intake status update."
+        );
+        return;
+      }
+
+      const savedSubmission = mapIntakeSubmission(intakeData.submission);
+
+      setIntakeSubmissions((current) =>
+        upsertById(current, savedSubmission)
+      );
+
+      if (!createData.duplicate) {
+        const savedActivity = await logActivity({
+          type: "System",
+          message: `Converted intake "${currentSubmission.inquiryId}" to service request "${savedRequest.title}".`,
+        });
+
+        if (savedActivity) {
+          setActivity((current) => upsertById(current, savedActivity));
+        }
+      }
+    } finally {
+      setIsConverting(false);
+    }
+  }
+
+  async function updateSubmissionStatus(
+    status: Extract<IntakeSubmissionStatus, "Reviewed" | "Ignored">
+  ) {
+    if (isUpdatingStatus || !submission) return;
+
+    setIsUpdatingStatus(true);
+
+    try {
+      const response = await fetch("/api/intake", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: submission.id,
+          status,
+        }),
+      });
+      const data = (await response.json()) as IntakePatchResponse;
+
+      if (!response.ok || !data.submission) {
+        console.error(data.error || "Failed to persist intake status update.");
+        return;
+      }
+
+      const savedSubmission = mapIntakeSubmission(data.submission);
+
+      setIntakeSubmissions((current) =>
+        upsertById(current, savedSubmission)
+      );
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  }
+
+  if (isLoadingCrm) {
+    return <div>Loading intake submissions...</div>;
   }
 
   if (!submission) {
     return <div>Submission not found.</div>;
   }
 
-  async function handleConvertToRequest() {
-    const currentSubmission = intakeSubmissions.find(
-      (item) => item.id === submissionId
-    );
-
-    if (!currentSubmission) return;
-    if (!submission) return;
-
-    const newRequest = {
-      id: crypto.randomUUID(),
-      intakeSubmissionId: submission.id,
-      clientName: submission.company || submission.name,
-      title: `${submission.projectType || "General Inquiry"} Request`,
-      description:
-        submission.message ||
-        submission.goal ||
-        "No description provided.",
-      category: submission.projectType || "General",
-      status: "New" as const,
-      requestedAt: submission.submittedAt,
-    };
-    
-    const createResponse = await fetch("/api/service-requests", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newRequest),
-    });
-
-    if (!createResponse.ok) {
-      console.error("Failed to persist service request.");
-      return;
-    }
-
-    const createData = await createResponse.json();
-    const savedRequest = createData.serviceRequest;
-
-    setServiceRequests((current) => [
-      {
-        id: savedRequest.id,
-        intakeSubmissionId: savedRequest.intakeSubmissionId ?? undefined,
-        clientId: savedRequest.clientId ?? undefined,
-        clientName: savedRequest.clientName ?? undefined,
-        title: savedRequest.title,
-        description: savedRequest.description,
-        category: savedRequest.category,
-        status: savedRequest.status,
-        requestedAt: savedRequest.requestedAt,
-      },
-      ...current,
-    ]);
-
-    const savedActivity = await logActivity({
-      type: "System",
-      message: `Converted intake "${currentSubmission.inquiryId}" to service request "${newRequest.title}".`,
-    });
-
-    if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
-    };
-
-    setIntakeSubmissions((current) =>
-      current.map((item) =>
-        item.id === currentSubmission.id
-          ? { ...item, status: "Converted" }
-          : item
-      )
-    );
-    const response = await fetch("/api/intake", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: currentSubmission.id,
-        status: "Converted",
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Failed to persist intake status update.");
-    }
-  }
-
-  async function updateSubmissionStatus(status: "Reviewed" | "Ignored") {
-    setIntakeSubmissions((current) =>
-      current.map((item) =>
-        item.id === submissionId ? { ...item, status } : item
-      )
-    );
-    if(!submission)
-      return;
-    const response = await fetch("/api/intake", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: submission.id,
-        status,
-      }),
-    });
-
-    if (!response.ok) {
-      console.error("Failed to persist intake status update.");
-    }
-  }
-  function formatDate(value?: string) {
-  if (!value) return "—";
-
-  return new Date(value).toLocaleDateString();
-}
   return (
     <>
       <div className="mb-6">
@@ -203,7 +229,9 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
           <Button
             size="sm"
             variant="outline"
-            disabled={submission.status === "Converted"}
+            disabled={
+              isUpdatingStatus || submission.status === "Converted"
+            }
             onClick={() => updateSubmissionStatus("Reviewed")}
           >
             Mark Reviewed
@@ -212,7 +240,9 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
           <Button
             size="sm"
             variant="destructive"
-            disabled={submission.status === "Converted"}
+            disabled={
+              isUpdatingStatus || submission.status === "Converted"
+            }
             onClick={() => updateSubmissionStatus("Ignored")}
           >
             Ignore
@@ -220,13 +250,16 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
 
           <Button
             size="sm"
-            disabled={submission.status === "Converted"}
+            disabled={isConverting || submission.status === "Converted"}
             onClick={handleConvertToRequest}
           >
-            {submission.status === "Converted" ? "Converted" : "Convert"}
+            {isConverting
+              ? "Converting..."
+              : submission.status === "Converted"
+                ? "Converted"
+                : "Convert"}
           </Button>
         </div>
-
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -249,16 +282,16 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
 
             <div>
               <p className="text-slate-500">Company</p>
-              <p className="font-medium">{submission.company || "—"}</p>
+              <p className="font-medium">{submission.company || "-"}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Preferred Contact</p>
               <p className="font-medium">
-                {submission.preferredContact || "—"}
+                {submission.preferredContact || "-"}
               </p>
             </div>
-            
+
             <div>
               <p className="text-slate-500">Inquiry ID</p>
               <p className="font-medium">{submission.inquiryId}</p>
@@ -276,7 +309,9 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
 
             <div>
               <p className="text-slate-500">Submitted At</p>
-              <p className="font-medium">{formatDate(submission.submittedAt)}</p>
+              <p className="font-medium">
+                {formatDate(submission.submittedAt)}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -292,32 +327,34 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
           <CardContent className="space-y-4 text-sm">
             <div>
               <p className="text-slate-500">Project Type</p>
-              <p className="font-medium">{submission.projectType || "General"}</p>
+              <p className="font-medium">
+                {submission.projectType || "General"}
+              </p>
             </div>
 
             <div>
               <p className="text-slate-500">Goal</p>
-              <p>{submission.goal || "—"}</p>
+              <p>{submission.goal || "-"}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Blocker</p>
-              <p>{submission.blocker || "—"}</p>
+              <p>{submission.blocker || "-"}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Budget</p>
-              <p>{submission.budget || "—"}</p>
+              <p>{submission.budget || "-"}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Timeline</p>
-              <p>{submission.timeline || "—"}</p>
+              <p>{submission.timeline || "-"}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Message</p>
-              <p>{submission.message || "—"}</p>
+              <p>{submission.message || "-"}</p>
             </div>
           </CardContent>
         </Card>

@@ -191,7 +191,9 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    refreshCrmData();
+    void (async () => {
+      await refreshCrmData();
+    })();
   }, []);
   
   return (

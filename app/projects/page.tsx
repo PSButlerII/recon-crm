@@ -91,8 +91,6 @@ export default function ProjectsPage() {
     
   });
   
-  const [isLoading, setIsLoading] = useState(false);
-
   async function handleAddProject() {
     const client = clients.find(
       (client) => client.id === clientId
@@ -173,7 +171,6 @@ export default function ProjectsPage() {
 
   return new Date(value).toLocaleDateString();
 }
-  refreshCrmData  
   
   return (
     <>

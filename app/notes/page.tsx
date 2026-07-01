@@ -1,5 +1,5 @@
 "use client";
-import { useState,useEffect } from "react";
+import { useState } from "react";
 import { PageActions } from "@/components/page-actions";
 import { PageHeader } from "@/components/page-header";
 import { WorkspaceItem } from "@/components/workspace-item";
@@ -116,7 +116,6 @@ function formatDate(value?: string) {
 
   return new Date(value).toLocaleDateString();
 }
-  refreshCrmData
 
   return (
     <>

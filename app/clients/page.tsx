@@ -452,11 +452,7 @@ export default function ClientsPage() {
             </TableHeader>
 
             <TableBody>
-              {filteredClients.map((client) => {
-              const clientProjectCount = projects.filter(
-                (project) => project.clientId === client.id
-              ).length;
-
+              {filteredClients.map((client) => {       
               return (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">

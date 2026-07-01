@@ -452,8 +452,7 @@ export default function ClientsPage() {
             </TableHeader>
 
             <TableBody>
-              {filteredClients.map((client) => {       
-              return (
+              {filteredClients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">
                     <Link href={`/clients/${client.id}`} className="hover:underline">
@@ -502,8 +501,7 @@ export default function ClientsPage() {
                   </TableCell>
                   <TableCell>{client.lastContacted ?? "—"}</TableCell>
                 </TableRow>
-  );
-})}
+              ))}
             </TableBody>
           </Table>
         </CardContent>

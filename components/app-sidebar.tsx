@@ -20,6 +20,8 @@ import {
   LogOut,
 } from "lucide-react";
 
+const showDebugNav = process.env.NODE_ENV !== "production";
+
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/clients", label: "Clients", icon: Users },
@@ -34,7 +36,7 @@ const navItems = [
   { href: "/service-requests", label: "Requests", icon: ClipboardList },
   { href: "/intake", label: "Intake", icon: Inbox },
   { href: "/activity", label: "Activity", icon: History },
-  { href: "/debug", label: "Debug", icon: Bug }
+  ...(showDebugNav ? [{ href: "/debug", label: "Debug", icon: Bug }] : []),
 ];
 
 export function AppSidebar() {

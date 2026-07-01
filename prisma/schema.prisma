@@ -135,6 +135,7 @@ model Client {
 
 model AppSettings {
   id                String   @id @default(cuid())
+  key               String   @unique @default("default")
 
   businessName      String   @default("Recon Dev LLC")
   defaultEmail      String?

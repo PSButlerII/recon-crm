@@ -19,7 +19,7 @@ export default function SettingsPage() {
 
   return (
     <SettingsForm
-      key={settings?.id ?? "default-settings"}
+      key={settings ? `${settings.id}-${settings.updatedAt}` : "default-settings"}
       settings={settings}
       setSettings={setSettings}
       refreshCrmData={refreshCrmData}

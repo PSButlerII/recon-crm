@@ -37,6 +37,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCrm } from "@/context/crm-context";
+import {
+  mapProject,
+  prependActivity,
+  upsertById,
+  type PersistedProject,
+} from "@/lib/crm-record-mappers";
+import { logActivity } from "@/lib/log-activity";
 import { useState } from "react";
 
 const statusVariants = {
@@ -46,6 +53,13 @@ const statusVariants = {
   Completed: "default",
   Cancelled: "destructive",
 } as const;
+
+const UNASSIGNED_CLIENT_VALUE = "__unassigned__";
+const UNASSIGNED_CLIENT_NAME = "Unassigned";
+
+function getProjectClientSelectValue(project: Project) {
+  return project.clientId || UNASSIGNED_CLIENT_VALUE;
+}
 
 
 export default function ProjectsPage() {
@@ -62,7 +76,7 @@ export default function ProjectsPage() {
   const [open, setOpen] = useState(false);
   
   const [name, setName] = useState("");
-  const [clientId, setClientId] = useState("");
+  const [clientId, setClientId] = useState(UNASSIGNED_CLIENT_VALUE);
   const [description, setDescription] = useState("");
   const [status, setStatus] =
   useState<ProjectStatus>("Planning");
@@ -91,19 +105,14 @@ export default function ProjectsPage() {
     
   });
   
-  const [isLoading, setIsLoading] = useState(false);
-
   async function handleAddProject() {
-    const client = clients.find(
-      (client) => client.id === clientId
-    );
-    
-    if (!client) return;
-    
+    const client = clients.find((client) => client.id === clientId);
+    const savedName = name;
+
     const newProject: Project = {
       id: crypto.randomUUID(),
-      clientId,
-      clientName: client.name,
+      clientId: client?.id ?? "",
+      clientName: client?.name ?? UNASSIGNED_CLIENT_NAME,
       name,
       description,
       status,
@@ -112,7 +121,7 @@ export default function ProjectsPage() {
       startDate,
       dueDate,
     };
-    
+
     const response = await fetch("/api/projects", {
       method: "POST",
       headers: {
@@ -120,60 +129,94 @@ export default function ProjectsPage() {
       },
       body: JSON.stringify(newProject),
     });
-    
+
     if (!response.ok) {
       console.error("Failed to persist project.");
       return;
     }
-    
-    const data = await response.json();
-    const savedProject = data.project;
-    
-    setProjects((current) => [
-      {
-        id: savedProject.id,
-        clientId: savedProject.clientId ?? undefined,
-        clientName: savedProject.clientName,
-        serviceRequestId: savedProject.serviceRequestId ?? undefined,
-        name: savedProject.name,
-        description: savedProject.description,
-        status: savedProject.status,
-        priority: savedProject.priority,
-        progress: savedProject.progress,
-        startDate: savedProject.startDate ?? undefined,
-        dueDate: savedProject.dueDate ?? undefined,
-      },
-      ...current,
-    ]);
-    
-    setActivity((current) => [
-      {
-        id: crypto.randomUUID(),
-        clientId: newProject.clientId,
-        projectId: newProject.id,
-        type: "Project",
-        message: `Created project "${newProject.name}".`,
-        createdAt: new Date().toLocaleString(),
-      },
-      ...current,
-    ]);
-    
+
+    const data = (await response.json()) as { project: PersistedProject };
+    const savedProject = mapProject(data.project);
+
+    setProjects((current) => upsertById(current, savedProject));
+
+    const savedActivity = await logActivity({
+      clientId: savedProject.clientId || undefined,
+      projectId: savedProject.id,
+      type: "Project",
+      message: `Created project "${savedProject.name}".`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => prependActivity(current, savedActivity));
+    }
+
     setName("");
-    setClientId("");
+    setClientId(UNASSIGNED_CLIENT_VALUE);
     setDescription("");
     setStatus("Planning");
     setPriority("Medium");
     setStartDate("");
     setDueDate("");
-    setSuccessMessage(`Project "${name}" was added.`);
+    setSuccessMessage(`Project "${savedName}" was added.`);
     setOpen(false);
+  }
+
+  async function handleUpdateProjectClient(project: Project, nextClientId: string) {
+    const selectedClient = clients.find((client) => client.id === nextClientId);
+    const shouldDetach = nextClientId === UNASSIGNED_CLIENT_VALUE;
+    const previousClientName = project.clientId
+      ? project.clientName
+      : UNASSIGNED_CLIENT_NAME;
+    const nextClientName = selectedClient?.name ?? UNASSIGNED_CLIENT_NAME;
+
+    if ((!project.clientId && shouldDetach) || project.clientId === nextClientId) {
+      return;
+    }
+
+    if (!selectedClient && !shouldDetach) {
+      console.error("Cannot assign project to an unknown client.");
+      return;
+    }
+
+    const response = await fetch("/api/projects", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: project.id,
+        clientId: selectedClient?.id ?? null,
+        clientName: nextClientName,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to update project client.");
+      return;
+    }
+
+    const data = (await response.json()) as { project: PersistedProject };
+    const savedProject = mapProject(data.project);
+
+    setProjects((current) => upsertById(current, savedProject));
+
+    const savedActivity = await logActivity({
+      clientId: savedProject.clientId || undefined,
+      projectId: savedProject.id,
+      type: "Project",
+      message: `Changed project "${savedProject.name}" client from ${previousClientName} to ${nextClientName}.`,
+    });
+
+    if (savedActivity) {
+      setActivity((current) => prependActivity(current, savedActivity));
+    }
   }
   function formatDate(value?: string) {
   if (!value) return "—";
 
   return new Date(value).toLocaleDateString();
 }
-  refreshCrmData  
   
   return (
     <>
@@ -247,6 +290,9 @@ export default function ProjectsPage() {
                   </SelectTrigger>
 
                   <SelectContent>
+                    <SelectItem value={UNASSIGNED_CLIENT_VALUE}>
+                      Unassigned
+                    </SelectItem>
                     {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}
@@ -337,7 +383,7 @@ export default function ProjectsPage() {
               <Button
                 className="w-full"
                 onClick={handleAddProject}
-                disabled={!name || !clientId}
+                disabled={!name}
               >
                 Save Project
               </Button>
@@ -384,12 +430,27 @@ export default function ProjectsPage() {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/clients/${project.clientId}`}
-                      className="text-slate-600 hover:underline"
+                    <Select
+                      value={getProjectClientSelectValue(project)}
+                      onValueChange={(value) =>
+                        handleUpdateProjectClient(project, value)
+                      }
                     >
-                      {project.clientName}
-                    </Link>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select client" />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        <SelectItem value={UNASSIGNED_CLIENT_VALUE}>
+                          Unassigned
+                        </SelectItem>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     <Badge variant={statusVariants[project.status]}>

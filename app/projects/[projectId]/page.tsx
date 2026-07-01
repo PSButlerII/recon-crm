@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { logActivity } from "@/lib/log-activity";
+import { prependActivity } from "@/lib/crm-record-mappers";
 
 type ProjectDetailPageProps = {
   params: Promise<{
@@ -67,6 +68,16 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   const { projectId } = use(params);
   const project = projects.find((item) => item.id === projectId);
 
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteBody, setNoteBody] = useState("");
+  const [noteType, setNoteType] = useState<NoteType>("General");
+
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [taskStatus, setTaskStatus] = useState<TaskStatus>("Todo");
+  const [taskPriority, setTaskPriority] = useState<TaskPriority>("Medium");
+  const [taskDueDate, setTaskDueDate] = useState("");
+
   if (isLoadingCrm) {
     return <div>Loading project...</div>;
   }
@@ -93,16 +104,6 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     (request) => request.id === project.serviceRequestId
   );
   
-  const [noteTitle, setNoteTitle] = useState("");
-  const [noteBody, setNoteBody] = useState("");
-  const [noteType, setNoteType] = useState<NoteType>("General");
-
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskDescription, setTaskDescription] = useState("");
-  const [taskStatus, setTaskStatus] = useState<TaskStatus>("Todo");
-  const [taskPriority, setTaskPriority] = useState<TaskPriority>("Medium");
-  const [taskDueDate, setTaskDueDate] = useState("");
-
   const completedTasks = projectTasks.filter((task) => task.status === "Done");
 
   const calculatedProgress = projectTasks.length > 0
@@ -164,17 +165,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
 
     setNoteTitle("");
@@ -241,17 +232,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   });
 
   if (savedActivity) {
-    setActivity((current) => [
-      {
-        id: savedActivity.id,
-        clientId: savedActivity.clientId ?? undefined,
-        projectId: savedActivity.projectId ?? undefined,
-        type: savedActivity.type,
-        message: savedActivity.message,
-        createdAt: savedActivity.createdAt,
-      },
-      ...current,
-    ]);
+    setActivity((current) => prependActivity(current, savedActivity));
   }
 
   setTaskTitle("");
@@ -325,17 +306,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
   }
 function formatDate(value?: string) {
@@ -343,10 +314,6 @@ function formatDate(value?: string) {
 
   return new Date(value).toLocaleDateString();
 }
-  if (!project) {
-    notFound();
-  }
-
   return (
     <>
       <div className="mb-6">

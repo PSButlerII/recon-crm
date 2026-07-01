@@ -1,6 +1,6 @@
 "use client";
 
-import { useState,useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { logActivity } from "@/lib/log-activity";
+import { prependActivity } from "@/lib/crm-record-mappers";
 
 
 
@@ -126,17 +127,7 @@ export default function TasksPage() {
       });
 
       if (savedActivity) {
-        setActivity((current) => [
-          {
-            id: savedActivity.id,
-            clientId: savedActivity.clientId ?? undefined,
-            projectId: savedActivity.projectId ?? undefined,
-            type: savedActivity.type,
-            message: savedActivity.message,
-            createdAt: savedActivity.createdAt,
-          },
-          ...current,
-        ]);
+        setActivity((current) => prependActivity(current, savedActivity));
       }
 
       setTitle("");
@@ -148,7 +139,7 @@ export default function TasksPage() {
       setSuccessMessage(`Task "${title}" was added.`);
       setOpen(false);
   }
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
 
 function formatDate(value?: string) {
   if (!value) return "—";
@@ -156,7 +147,6 @@ function formatDate(value?: string) {
   return new Date(value).toLocaleDateString();
 }
  
-refreshCrmData
   return (
     <>
       <PageActions>

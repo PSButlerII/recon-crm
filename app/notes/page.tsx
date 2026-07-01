@@ -1,5 +1,5 @@
 "use client";
-import { useState,useEffect } from "react";
+import { useState } from "react";
 import { PageActions } from "@/components/page-actions";
 import { PageHeader } from "@/components/page-header";
 import { WorkspaceItem } from "@/components/workspace-item";
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useCrm } from "@/context/crm-context";
 import { logActivity } from "@/lib/log-activity";
+import { prependActivity } from "@/lib/crm-record-mappers";
 
 
 export default function NotesPage() {
@@ -90,17 +91,7 @@ export default function NotesPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
     setTitle("");
     setBody("");
@@ -116,7 +107,6 @@ function formatDate(value?: string) {
 
   return new Date(value).toLocaleDateString();
 }
-  refreshCrmData
 
   return (
     <>

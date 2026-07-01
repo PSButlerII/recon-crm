@@ -129,3 +129,50 @@ Added client update controls on the database-backed Clients page.
 
 - Consider adding inline success/error feedback for client update failures.
 - Continue moving conversion flows to atomic/idempotent APIs, starting with Intake to Service Request.
+
+## 2026-07-01 - Persistence Consistency and Local Verification Readiness
+
+### Scope
+
+Finished the context refresh consistency pass and documented what still needs verification on a local machine with `DATABASE_URL` access.
+
+### Changes
+
+- Confirmed file metadata persistence is implemented through `FileRecord`, `app/api/files/route.ts`, and the Files page context refresh flow.
+- Confirmed settings persistence is implemented through singleton `AppSettings`, `app/api/settings/route.ts`, and the Settings page `PATCH /api/settings` save flow.
+- Added persisted Task and Note mapper types plus `mapTask` and `mapNote`.
+- Updated `refreshCrmData` so Projects, Tasks, Notes, and Activity are mapped before entering context, matching the existing Client, Intake, Service Request, File, Quote, and Invoice mapping approach.
+- Kept file persistence scoped to metadata only; binary upload/storage is intentionally not implemented yet.
+
+### Verification in Codex Cloud
+
+- `npm run lint` passed.
+- `npm run build` passed.
+- `npx prisma validate` passed.
+- `prisma migrate status` was intentionally not run because Codex Cloud does not have `DATABASE_URL` access.
+
+### Local Verification Needed
+
+Run these commands locally with `DATABASE_URL` configured:
+
+```bash
+npx prisma generate
+npx prisma validate
+npx prisma migrate status
+npm run lint
+npm run build
+```
+
+If the FileRecord or AppSettings singleton-key migrations have not been applied locally yet, run:
+
+```bash
+npx prisma migrate dev
+```
+
+### Remaining Work
+
+- Manually verify `POST /api/files` and `GET /api/files` against a local database.
+- Manually verify the Files page refresh button rehydrates file metadata from `/api/files`.
+- Manually verify client and project detail pages show related file metadata from context.
+- Manually verify Settings save persists and reloads business name, default email, default hourly rate, default currency, and payment terms.
+- Keep binary file upload/storage out of scope until metadata persistence is verified.

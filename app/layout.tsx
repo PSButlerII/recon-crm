@@ -21,7 +21,7 @@ export default function RootLayout({
       <body>
           <CrmProvider>
         <div className="flex min-h-screen bg-slate-100">
-          <AppSidebar />
+          
           <main className="flex-1 p-6">
             <CrmLoadingBanner />
             {children}

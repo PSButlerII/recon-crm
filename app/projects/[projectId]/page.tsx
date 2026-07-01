@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { logActivity } from "@/lib/log-activity";
+import { prependActivity } from "@/lib/crm-record-mappers";
 
 type ProjectDetailPageProps = {
   params: Promise<{
@@ -164,17 +165,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
 
     setNoteTitle("");
@@ -241,17 +232,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
   });
 
   if (savedActivity) {
-    setActivity((current) => [
-      {
-        id: savedActivity.id,
-        clientId: savedActivity.clientId ?? undefined,
-        projectId: savedActivity.projectId ?? undefined,
-        type: savedActivity.type,
-        message: savedActivity.message,
-        createdAt: savedActivity.createdAt,
-      },
-      ...current,
-    ]);
+    setActivity((current) => prependActivity(current, savedActivity));
   }
 
   setTaskTitle("");
@@ -325,17 +306,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
   }
 function formatDate(value?: string) {

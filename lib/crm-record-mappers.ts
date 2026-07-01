@@ -234,10 +234,22 @@ export function mapServiceRequest(
   };
 }
 
+export function prependActivity(records: Activity[], activity: Activity) {
+  return [activity, ...records];
+}
+
 export function upsertById<T extends { id: string }>(records: T[], record: T) {
   if (records.some((item) => item.id === record.id)) {
     return records.map((item) => (item.id === record.id ? record : item));
   }
 
   return [record, ...records];
+}
+
+export function upsertMappedById<Persisted, Mapped extends { id: string }>(
+  records: Mapped[],
+  persisted: Persisted,
+  mapper: (record: Persisted) => Mapped
+) {
+  return upsertById(records, mapper(persisted));
 }

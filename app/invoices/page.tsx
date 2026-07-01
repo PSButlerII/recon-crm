@@ -22,7 +22,12 @@ import { useState } from "react";
 import { PageActions } from "@/components/page-actions";
 import { useCrm } from "@/context/crm-context";
 import { logActivity } from "@/lib/log-activity";
-import { mapInvoice, upsertById, type PersistedInvoice } from "@/lib/crm-record-mappers";
+import {
+  mapInvoice,
+  prependActivity,
+  upsertMappedById,
+  type PersistedInvoice,
+} from "@/lib/crm-record-mappers";
 import type { BillingStatus, Invoice } from "@/types/billing";
 import { Input } from "@/components/ui/input";
 import {
@@ -141,7 +146,7 @@ export default function InvoicesPage() {
     const savedInvoice = data.invoice;
 
     setInvoices((current) =>
-      upsertById(current, mapInvoice(savedInvoice as PersistedInvoice))
+      upsertMappedById(current, savedInvoice as PersistedInvoice, mapInvoice)
     );
     const savedActivity = await logActivity({
       clientId: savedInvoice.clientId ?? undefined,
@@ -151,17 +156,7 @@ export default function InvoicesPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
     setOpen(false);
     setClientId("");
@@ -211,17 +206,7 @@ export default function InvoicesPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
   }
 
@@ -265,17 +250,7 @@ export default function InvoicesPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
   }
 

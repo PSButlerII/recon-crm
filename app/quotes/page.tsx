@@ -39,7 +39,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { logActivity } from "@/lib/log-activity";
-import { mapInvoice, mapQuote, upsertById, type PersistedInvoice, type PersistedQuote } from "@/lib/crm-record-mappers";
+import {
+  mapInvoice,
+  mapQuote,
+  prependActivity,
+  upsertMappedById,
+  type PersistedInvoice,
+  type PersistedQuote,
+} from "@/lib/crm-record-mappers";
 
 export default function QuotesPage() {
   
@@ -113,7 +120,7 @@ export default function QuotesPage() {
     const savedQuote = data.quote;
 
     setQuotes((current) =>
-      upsertById(current, mapQuote(savedQuote as PersistedQuote))
+      upsertMappedById(current, savedQuote as PersistedQuote, mapQuote)
     );
 
     const savedActivity = await logActivity({
@@ -124,18 +131,8 @@ export default function QuotesPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-    ]);
-  }
+      setActivity((current) => prependActivity(current, savedActivity));
+    }
 
     setClientId("");
     setProjectId("");
@@ -186,17 +183,7 @@ export default function QuotesPage() {
       });
 
       if (savedActivity) {
-        setActivity((current) => [
-          {
-            id: savedActivity.id,
-            clientId: savedActivity.clientId ?? undefined,
-            projectId: savedActivity.projectId ?? undefined,
-            type: savedActivity.type,
-            message: savedActivity.message,
-            createdAt: savedActivity.createdAt,
-          },
-          ...current,
-        ]);
+        setActivity((current) => prependActivity(current, savedActivity));
       }
   }
 
@@ -242,17 +229,7 @@ export default function QuotesPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
   }
 
@@ -289,7 +266,7 @@ export default function QuotesPage() {
     const savedInvoice = data.invoice;
 
     setInvoices((current) =>
-      upsertById(current, mapInvoice(savedInvoice as PersistedInvoice))
+      upsertMappedById(current, savedInvoice as PersistedInvoice, mapInvoice)
     );
 
     const savedActivity = await logActivity({
@@ -300,17 +277,7 @@ export default function QuotesPage() {
     });
 
     if (savedActivity) {
-      setActivity((current) => [
-        {
-          id: savedActivity.id,
-          clientId: savedActivity.clientId ?? undefined,
-          projectId: savedActivity.projectId ?? undefined,
-          type: savedActivity.type,
-          message: savedActivity.message,
-          createdAt: savedActivity.createdAt,
-        },
-        ...current,
-      ]);
+      setActivity((current) => prependActivity(current, savedActivity));
     }
   }
 

@@ -5,6 +5,8 @@ import type { Project } from "@/types/project";
 import type { Invoice, Quote } from "@/types/billing";
 import type { FileRecord } from "@/types/file-record";
 import type { ServiceRequest } from "@/types/service-request";
+import type { Note } from "@/types/note";
+import type { Task } from "@/types/task";
 
 export type PersistedActivity = Omit<Activity, "clientId" | "projectId"> & {
   clientId: string | null;
@@ -70,6 +72,22 @@ export type PersistedIntakeSubmission = Omit<
   timeline: string | null;
   preferredContact: string | null;
   message: string | null;
+};
+
+
+export type PersistedNote = Omit<Note, "clientId" | "projectId"> & {
+  clientId: string | null;
+  projectId: string | null;
+};
+
+export type PersistedTask = Omit<
+  Task,
+  "clientId" | "clientName" | "description" | "dueDate"
+> & {
+  clientId: string | null;
+  clientName: string | null;
+  description: string | null;
+  dueDate: string | null;
 };
 
 export type PersistedProject = Omit<
@@ -166,6 +184,34 @@ export function mapIntakeSubmission(
     submittedAt: submission.submittedAt,
     status: submission.status,
     priority: submission.priority,
+  };
+}
+
+
+export function mapNote(note: PersistedNote): Note {
+  return {
+    id: note.id,
+    clientId: note.clientId ?? undefined,
+    projectId: note.projectId ?? undefined,
+    title: note.title,
+    body: note.body,
+    type: note.type,
+    createdAt: note.createdAt,
+  };
+}
+
+export function mapTask(task: PersistedTask): Task {
+  return {
+    id: task.id,
+    projectId: task.projectId,
+    projectName: task.projectName,
+    clientId: task.clientId ?? "",
+    clientName: task.clientName ?? "",
+    title: task.title,
+    description: task.description ?? undefined,
+    status: task.status,
+    priority: task.priority,
+    dueDate: task.dueDate ?? undefined,
   };
 }
 

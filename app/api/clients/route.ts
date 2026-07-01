@@ -15,7 +15,6 @@ type CreateClientPayload = {
   email: string;
   phone?: string;
   status?: ClientStatus;
-  projectCount?: number;
   lastContacted?: string;
 };
 
@@ -26,7 +25,6 @@ type UpdateClientPayload = {
   email?: string;
   phone?: string | null;
   status?: ClientStatus;
-  projectCount?: number;
   lastContacted?: string | null;
 };
 
@@ -104,7 +102,6 @@ export async function POST(request: Request) {
         email: payload.email,
         phone: payload.phone || null,
         status: payload.status ?? "Lead",
-        projectCount: payload.projectCount ?? 0,
         lastContacted,
       },
     });
@@ -159,7 +156,6 @@ export async function PATCH(request: Request) {
       email?: string;
       phone?: string | null;
       status?: ClientStatus;
-      projectCount?: number;
       lastContacted?: Date | null;
     } = {};
 
@@ -181,10 +177,6 @@ export async function PATCH(request: Request) {
 
     if (payload.status) {
       data.status = payload.status;
-    }
-
-    if (typeof payload.projectCount === "number") {
-      data.projectCount = payload.projectCount;
     }
 
     if ("lastContacted" in payload) {

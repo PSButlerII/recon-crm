@@ -9,6 +9,12 @@ const PROJECT_PRIORITIES: ProjectPriority[] = [
   "Urgent",
 ];
 
+
+type ServiceRequestConversionTransaction = Pick<
+  typeof prisma,
+  "serviceRequest" | "project" | "activityLog"
+>;
+
 type ConvertServiceRequestPayload = {
   id?: string;
   priority?: ProjectPriority;
@@ -70,8 +76,9 @@ export async function POST(request: Request) {
 
     const startDate = new Date();
 
-    const result = await prisma.$transaction(async (tx) => {
-      const serviceRequest = await tx.serviceRequest.findUnique({
+    const result = await prisma.$transaction(
+      async (tx: ServiceRequestConversionTransaction) => {
+        const serviceRequest = await tx.serviceRequest.findUnique({
         where: {
           id: serviceRequestId,
         },

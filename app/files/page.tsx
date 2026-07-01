@@ -22,7 +22,7 @@ import { PageActions } from "@/components/page-actions";
 import { useCrm } from "@/context/crm-context";
 
 export default function FilesPage() {
-  const { files } = useCrm();
+  const { files, refreshCrmData, isLoadingCrm } = useCrm();
   return (
     <>
       <PageActions>
@@ -30,6 +30,10 @@ export default function FilesPage() {
           title="Files"
           description="Documents, references, deliverables, and client/project assets."
         />
+
+        <Button variant="outline" onClick={refreshCrmData}>
+          {isLoadingCrm ? "Refreshing..." : "Refresh"}
+        </Button>
 
         <Button>Upload File</Button>
       </PageActions>

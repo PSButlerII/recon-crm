@@ -4,8 +4,6 @@ import { requireApiAuth } from "@/lib/auth/require-auth";
 
 const SETTINGS_KEY = "default";
 
-const SETTINGS_KEY = "default";
-
 type UpdateSettingsPayload = {
   businessName?: string;
   defaultEmail?: string;

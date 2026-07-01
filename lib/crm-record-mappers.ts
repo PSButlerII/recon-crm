@@ -2,6 +2,7 @@ import type { Activity } from "@/types/activity";
 import type { Client } from "@/types/client";
 import type { IntakeSubmission } from "@/types/intake-submission";
 import type { Project } from "@/types/project";
+import type { Invoice, Quote } from "@/types/billing";
 import type { ServiceRequest } from "@/types/service-request";
 
 export type PersistedActivity = Omit<Activity, "clientId" | "projectId"> & {
@@ -12,6 +13,31 @@ export type PersistedActivity = Omit<Activity, "clientId" | "projectId"> & {
 export type PersistedClient = Omit<Client, "phone" | "lastContacted"> & {
   phone: string | null;
   lastContacted: string | null;
+};
+
+
+export type PersistedQuote = Omit<
+  Quote,
+  "clientId" | "projectId" | "projectName" | "issuedDate" | "validUntil"
+> & {
+  clientId: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  issuedDate: string | null;
+  validUntil: string | null;
+};
+
+export type PersistedInvoice = Omit<
+  Invoice,
+  "quoteId" | "clientId" | "projectId" | "projectName" | "issuedDate" | "dueDate" | "paidDate"
+> & {
+  quoteId: string | null;
+  clientId: string | null;
+  projectId: string | null;
+  projectName: string | null;
+  issuedDate: string | null;
+  dueDate: string | null;
+  paidDate: string | null;
 };
 
 export type PersistedIntakeSubmission = Omit<
@@ -128,6 +154,39 @@ export function mapProject(project: PersistedProject): Project {
     progress: project.progress,
     startDate: project.startDate ?? undefined,
     dueDate: project.dueDate ?? undefined,
+  };
+}
+
+
+export function mapQuote(quote: PersistedQuote): Quote {
+  return {
+    id: quote.id,
+    clientId: quote.clientId ?? "",
+    clientName: quote.clientName,
+    projectId: quote.projectId ?? undefined,
+    projectName: quote.projectName ?? undefined,
+    title: quote.title,
+    amount: quote.amount,
+    status: quote.status,
+    issuedDate: quote.issuedDate ?? undefined,
+    validUntil: quote.validUntil ?? undefined,
+  };
+}
+
+export function mapInvoice(invoice: PersistedInvoice): Invoice {
+  return {
+    id: invoice.id,
+    quoteId: invoice.quoteId ?? undefined,
+    clientId: invoice.clientId ?? undefined,
+    clientName: invoice.clientName,
+    projectId: invoice.projectId ?? undefined,
+    projectName: invoice.projectName ?? undefined,
+    title: invoice.title,
+    amount: invoice.amount,
+    status: invoice.status,
+    issuedDate: invoice.issuedDate ?? "",
+    dueDate: invoice.dueDate ?? undefined,
+    paidDate: invoice.paidDate ?? undefined,
   };
 }
 

@@ -8,10 +8,11 @@ The internal CRM admin route `/api/intake` remains protected by owner authentica
 
 | Variable | Required | Description |
 | --- | --- | --- |
+| `CRM_INTAKE_URL` | Website only | Full CRM endpoint URL, for example `https://crm.example.com/api/public/intake`. |
 | `CRM_INTAKE_API_KEY` | Yes | Shared bearer token used by the website when calling the public intake endpoint. |
 | `CRM_SIGNING_SECRET` | Yes | Shared HMAC secret used to sign the timestamp and raw JSON request body. |
 
-Store these values in the CRM host and in the trusted website/server that sends submissions. Do not expose them in browser JavaScript.
+Store these values in the CRM host and in the trusted website/server that sends submissions. Do not expose them in browser JavaScript, and do not call this endpoint directly from client-side form code.
 
 ## Endpoint
 
@@ -106,7 +107,7 @@ const signature = createHmac("sha256", signingSecret)
   .update(`${timestamp}.${body}`)
   .digest("hex");
 
-const response = await fetch("https://crm.example.com/api/public/intake", {
+const response = await fetch(process.env.CRM_INTAKE_URL, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",

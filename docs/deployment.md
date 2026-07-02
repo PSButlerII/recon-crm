@@ -13,6 +13,7 @@ Configure these in the production host's secret manager before starting the app:
 | `CRM_SESSION_SECRET` | Yes | High-entropy secret used to sign HTTP-only session cookies. See [auth setup](./auth.md#generate-crm_session_secret). |
 | `CRM_SESSION_COOKIE_NAME` | No | Defaults to `recon_crm_session`. Override only if the deployment needs a custom cookie name. |
 | `CRM_SESSION_TTL_SECONDS` | No | Defaults to `28800` seconds (8 hours). Shorter TTLs reduce exposure from an unattended signed-in browser. |
+| `CRM_INTAKE_URL` | Website only, if public website intake is enabled | Full CRM public intake URL used by the website server-side submit handler. |
 | `CRM_INTAKE_API_KEY` | Yes, if public website intake is enabled | Bearer token for `POST /api/public/intake`; see [public intake API](./public-intake-api.md). |
 | `CRM_SIGNING_SECRET` | Yes, if public website intake is enabled | HMAC signing secret for public intake requests; see [public intake API](./public-intake-api.md). |
 | `NODE_ENV` | Yes | Set to `production` for production builds/servers. This also hides the Debug navigation item. |

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireApiAuth } from "@/lib/auth/require-auth";
+import { getStableInquiryId, syncInquiryToCrm } from "@/lib/crm-intake-sync";
 
 type WebsiteInquiryPayload = {
-  inquiryId: string;
+  inquiryId?: string;
   source: string;
   name: string;
   email: string;
@@ -31,7 +32,6 @@ export async function POST(request: Request) {
     const payload = (await request.json()) as WebsiteInquiryPayload;
 
     if (
-      !payload.inquiryId ||
       !payload.source ||
       !payload.name ||
       !payload.email ||
@@ -46,9 +46,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const inquiryId = getStableInquiryId(payload);
+
     const existing = await prisma.intakeSubmission.findUnique({
       where: {
-        inquiryId: payload.inquiryId,
+        inquiryId,
       },
     });
 
@@ -65,7 +67,7 @@ export async function POST(request: Request) {
 
     const intake = await prisma.intakeSubmission.create({
       data: {
-        inquiryId: payload.inquiryId,
+        inquiryId,
         source: payload.source,
         name: payload.name,
         email: payload.email,
@@ -82,6 +84,13 @@ export async function POST(request: Request) {
         status: "New",
         priority: payload.priority ?? "normal",
       },
+    });
+
+    await syncInquiryToCrm({
+      ...payload,
+      inquiryId,
+      submittedAt: intake.submittedAt.toISOString(),
+      priority: payload.priority ?? "normal",
     });
 
     return NextResponse.json(

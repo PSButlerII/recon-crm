@@ -17,12 +17,26 @@ import type { Activity } from "@/types/activity";
 import type { Quote, Invoice } from "@/types/billing";
 import type { AppSettings } from "@/types/settings";
 import {
+  mapActivity,
   mapClient,
+  mapFileRecord,
   mapIntakeSubmission,
+  mapInvoice,
+  mapNote,
+  mapProject,
+  mapQuote,
   mapServiceRequest,
+  mapTask,
+  type PersistedActivity,
   type PersistedClient,
+  type PersistedFileRecord,
   type PersistedIntakeSubmission,
+  type PersistedInvoice,
+  type PersistedNote,
+  type PersistedProject,
+  type PersistedQuote,
   type PersistedServiceRequest,
+  type PersistedTask,
 } from "@/lib/crm-record-mappers";
 
 type CrmContextType = {
@@ -92,6 +106,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksResponse,
         notesResponse,
         activityResponse,
+        filesResponse,
         quotesResponse,
         invoicesResponse,
       ] = await Promise.all([
@@ -103,6 +118,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         fetch("/api/tasks"),
         fetch("/api/notes"),
         fetch("/api/activity"),
+        fetch("/api/files"),
         fetch("/api/quotes"),
         fetch("/api/invoices"),
       ]);
@@ -116,6 +132,7 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksData,
         notesData,
         activityData,
+        filesData,
         quotesData,
         invoicesData,
       ] = await Promise.all([
@@ -127,12 +144,17 @@ export function CrmProvider({ children }: { children: ReactNode }) {
         tasksResponse.json(),
         notesResponse.json(),
         activityResponse.json(),
+        filesResponse.json(),
         quotesResponse.json(),
         invoicesResponse.json(),
       ]);
 
       if (invoicesData.invoices) {
-        setInvoices(invoicesData.invoices);
+        setInvoices(
+          (invoicesData.invoices as PersistedInvoice[]).map((invoice) =>
+            mapInvoice(invoice)
+          )
+        );
       }
 
       if (settingsData.settings) {
@@ -164,23 +186,47 @@ export function CrmProvider({ children }: { children: ReactNode }) {
       }
 
       if (projectsData.projects) {
-        setProjects(projectsData.projects);
+        setProjects(
+          (projectsData.projects as PersistedProject[]).map((project) =>
+            mapProject(project)
+          )
+        );
       }
 
       if (tasksData.tasks) {
-        setTasks(tasksData.tasks);
+        setTasks(
+          (tasksData.tasks as PersistedTask[]).map((task) => mapTask(task))
+        );
       }
 
       if (notesData.notes) {
-        setNotes(notesData.notes);
+        setNotes(
+          (notesData.notes as PersistedNote[]).map((note) => mapNote(note))
+        );
       }
 
       if (activityData.activity) {
-        setActivity(activityData.activity);
+        setActivity(
+          (activityData.activity as PersistedActivity[]).map((activity) =>
+            mapActivity(activity)
+          )
+        );
+      }
+
+      if (filesData.files) {
+        setFiles(
+          (filesData.files as PersistedFileRecord[]).map((file) =>
+            mapFileRecord(file)
+          )
+        );
       }
 
       if (quotesData.quotes) {
-        setQuotes(quotesData.quotes);
+        setQuotes(
+          (quotesData.quotes as PersistedQuote[]).map((quote) =>
+            mapQuote(quote)
+          )
+        );
       }
       
       } catch (error) {
@@ -191,7 +237,9 @@ export function CrmProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    refreshCrmData();
+    void (async () => {
+      await refreshCrmData();
+    })();
   }, []);
   
   return (

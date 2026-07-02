@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireApiAuth } from "@/lib/auth/require-auth";
 
 type CreateActivityPayload = {
   clientId?: string;
@@ -9,6 +10,11 @@ type CreateActivityPayload = {
 };
 
 export async function GET() {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const activity = await prisma.activityLog.findMany({
       orderBy: {
@@ -31,6 +37,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const payload = (await request.json()) as CreateActivityPayload;
 

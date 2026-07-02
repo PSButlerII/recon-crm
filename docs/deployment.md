@@ -92,7 +92,7 @@ Back up all production data needed to restore the CRM:
 
 - PostgreSQL database: schedule automated backups and test restore procedures periodically.
 - Prisma migrations: keep committed migration files in source control and deploy from tagged releases.
-- Uploaded files: current file persistence is metadata-only, but if binary file uploads are added, back up the object store or filesystem path that contains those uploaded files.
+- Uploaded files: local uploads are stored under the server-side `uploads/` directory by default; back up that directory along with PostgreSQL metadata.
 - Secrets: keep production secrets in the host's secret manager and document the recovery/rotation process outside the repository.
 
 Before major migrations, take an on-demand PostgreSQL backup and verify that rollback/redeploy steps are understood.

@@ -261,8 +261,13 @@ export const FileRecordScalarFieldEnum = {
   projectId: 'projectId',
   projectName: 'projectName',
   name: 'name',
+  originalName: 'originalName',
+  mimeType: 'mimeType',
   type: 'type',
   size: 'size',
+  sizeBytes: 'sizeBytes',
+  storagePath: 'storagePath',
+  relativePath: 'relativePath',
   uploadedAt: 'uploadedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

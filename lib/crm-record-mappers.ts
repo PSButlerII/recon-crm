@@ -46,12 +46,26 @@ export type PersistedInvoice = Omit<
 
 export type PersistedFileRecord = Omit<
   FileRecord,
-  "clientId" | "clientName" | "projectId" | "projectName" | "uploadedAt"
+  | "clientId"
+  | "clientName"
+  | "projectId"
+  | "projectName"
+  | "originalName"
+  | "mimeType"
+  | "sizeBytes"
+  | "storagePath"
+  | "relativePath"
+  | "uploadedAt"
 > & {
   clientId: string | null;
   clientName: string | null;
   projectId: string | null;
   projectName: string | null;
+  originalName: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  storagePath: string | null;
+  relativePath: string | null;
   uploadedAt: string;
 };
 
@@ -157,8 +171,13 @@ export function mapFileRecord(file: PersistedFileRecord): FileRecord {
     projectId: file.projectId ?? undefined,
     projectName: file.projectName ?? undefined,
     name: file.name,
+    originalName: file.originalName ?? undefined,
+    mimeType: file.mimeType ?? undefined,
     type: file.type,
     size: file.size,
+    sizeBytes: file.sizeBytes ?? undefined,
+    storagePath: file.storagePath ?? undefined,
+    relativePath: file.relativePath ?? undefined,
     uploadedAt: file.uploadedAt,
   };
 }

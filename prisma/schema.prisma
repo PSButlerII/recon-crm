@@ -200,11 +200,16 @@ model FileRecord {
   projectId   String?
   projectName String?
 
-  name        String
-  type        String   @default("Document")
-  size        String
-  uploadedAt  DateTime @default(now())
+  name         String
+  originalName String?
+  mimeType     String?
+  type         String   @default("Document")
+  size         String
+  sizeBytes    Int?
+  storagePath  String?
+  relativePath String?
+  uploadedAt   DateTime @default(now())
 
-  createdAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

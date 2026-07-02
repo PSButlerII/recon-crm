@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireApiAuth } from "@/lib/auth/require-auth";
 
 type CreateProjectPayload = {
   clientId?: string;
@@ -16,9 +17,9 @@ type CreateProjectPayload = {
 
 function buildProjectData(payload: CreateProjectPayload) {
   return {
-    clientId: payload.clientId,
-    clientName: payload.clientName,
-    serviceRequestId: payload.serviceRequestId,
+    clientId: payload.clientId?.trim() || null,
+    clientName: payload.clientName.trim() || "Unassigned",
+    serviceRequestId: payload.serviceRequestId?.trim() || null,
     name: payload.name,
     description: payload.description,
     status: payload.status ?? "Planning",
@@ -30,6 +31,11 @@ function buildProjectData(payload: CreateProjectPayload) {
 }
 
 export async function GET() {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const projects = await prisma.project.findMany({
       orderBy: {
@@ -52,6 +58,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
   try {
     const payload = (await request.json()) as CreateProjectPayload;
 
@@ -135,15 +146,24 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
-  try {
-    const body = await request.json();
+type UpdateProjectPayload = {
+  id?: string;
+  clientId?: string | null;
+  clientName?: string | null;
+  serviceRequestId?: string | null;
+  status?: "Planning" | "Active" | "On Hold" | "Completed" | "Cancelled";
+  progress?: number;
+};
 
-    const { id, status, progress } = body as {
-      id?: string;
-      status?: "Planning" | "Active" | "On Hold" | "Completed" | "Cancelled";
-      progress?: number;
-    };
+export async function PATCH(request: Request) {
+  const unauthorized = await requireApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
+  try {
+    const body = (await request.json()) as UpdateProjectPayload;
+    const { id, status, progress } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -152,11 +172,26 @@ export async function PATCH(request: Request) {
       );
     }
 
+    const hasClientId = Object.hasOwn(body, "clientId");
+    const hasClientName = Object.hasOwn(body, "clientName");
+    const hasServiceRequestId = Object.hasOwn(body, "serviceRequestId");
+    const nextClientId = body.clientId?.trim() || null;
+    const nextClientName =
+      body.clientName?.trim() ||
+      (hasClientId && !nextClientId ? "Unassigned" : undefined);
+
     const project = await prisma.project.update({
       where: { id },
       data: {
         ...(status ? { status } : {}),
         ...(typeof progress === "number" ? { progress } : {}),
+        ...(hasClientId ? { clientId: nextClientId } : {}),
+        ...(hasClientName || (hasClientId && !nextClientId)
+          ? { clientName: nextClientName ?? "Unassigned" }
+          : {}),
+        ...(hasServiceRequestId
+          ? { serviceRequestId: body.serviceRequestId?.trim() || null }
+          : {}),
       },
     });
 

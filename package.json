@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "auth:hash": "node scripts/generate-password-hash.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

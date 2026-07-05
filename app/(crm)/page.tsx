@@ -273,7 +273,10 @@ export default function DashboardPage() {
                 >
                   <p className="font-medium">{submission.company || submission.name}</p>
                   <p className="mt-1 text-sm text-slate-500">
-                    {submission.projectType} · {submission.priority}
+                    {submission.source} · {submission.projectType}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {submission.email}
                   </p>
                 </Link>
                 ))

@@ -68,6 +68,10 @@ function formatDate(value?: string) {
   return new Date(value).toLocaleDateString();
 }
 
+function formatSource(value?: string) {
+  return value?.trim() || "Unknown";
+}
+
 export default function IntakePage() {
   const {
     intakeSubmissions,
@@ -126,6 +130,9 @@ export default function IntakePage() {
     const matchesSearch =
       submission.name.toLowerCase().includes(search.toLowerCase()) ||
       submission.email.toLowerCase().includes(search.toLowerCase()) ||
+      submission.phone.toLowerCase().includes(search.toLowerCase()) ||
+      submission.source.toLowerCase().includes(search.toLowerCase()) ||
+      submission.inquiryId.toLowerCase().includes(search.toLowerCase()) ||
       submission.company?.toLowerCase().includes(search.toLowerCase()) ||
       submission.projectType?.toLowerCase().includes(search.toLowerCase()) ||
       submission.message?.toLowerCase().includes(search.toLowerCase());
@@ -291,11 +298,11 @@ export default function IntakePage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Company</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Project Type</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
                 <TableHead>Submitted</TableHead>
                 <TableHead>Action</TableHead>
               </TableRow>
@@ -309,6 +316,12 @@ export default function IntakePage() {
                 return (
                   <TableRow key={submission.id}>
                     <TableCell>
+                      <span className="font-medium">
+                        {formatSource(submission.source)}
+                      </span>
+                    </TableCell>
+
+                    <TableCell>
                       <div>
                         <Link
                           href={`/intake/${submission.id}`}
@@ -320,10 +333,16 @@ export default function IntakePage() {
                         <p className="text-sm text-slate-500">
                           {submission.email}
                         </p>
+
+                        {submission.company && (
+                          <p className="text-xs text-slate-500">
+                            {submission.company}
+                          </p>
+                        )}
                       </div>
                     </TableCell>
 
-                    <TableCell>{submission.company || "-"}</TableCell>
+                    <TableCell>{submission.phone || "-"}</TableCell>
 
                     <TableCell>
                       {submission.projectType || "General"}
@@ -334,8 +353,6 @@ export default function IntakePage() {
                         {submission.status}
                       </Badge>
                     </TableCell>
-
-                    <TableCell>{submission.priority}</TableCell>
 
                     <TableCell>
                       {formatDate(submission.submittedAt)}

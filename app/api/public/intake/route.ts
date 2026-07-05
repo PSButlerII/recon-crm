@@ -180,6 +180,17 @@ export async function POST(request: Request) {
       data: toCreateData(validation.data),
     });
 
+    try {
+      await prisma.activityLog.create({
+        data: {
+          type: "System",
+          message: `Received public intake "${intake.inquiryId}" from ${intake.source} for ${intake.name}.`,
+        },
+      });
+    } catch (activityError) {
+      console.error("Public intake activity log error:", activityError);
+    }
+
     return safeJson(
       {
         ok: true,

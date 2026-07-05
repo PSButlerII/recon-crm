@@ -50,7 +50,11 @@ const statusVariants = {
 function formatDate(value?: string) {
   if (!value) return "-";
 
-  return new Date(value).toLocaleDateString();
+  return new Date(value).toLocaleString();
+}
+
+function formatValue(value?: string) {
+  return value?.trim() || "-";
 }
 
 export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
@@ -281,25 +285,44 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
             </div>
 
             <div>
+              <p className="text-slate-500">Phone</p>
+              <p className="font-medium">{formatValue(submission.phone)}</p>
+            </div>
+
+            <div>
               <p className="text-slate-500">Company</p>
-              <p className="font-medium">{submission.company || "-"}</p>
+              <p className="font-medium">{formatValue(submission.company)}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Preferred Contact</p>
               <p className="font-medium">
-                {submission.preferredContact || "-"}
+                {formatValue(submission.preferredContact)}
               </p>
             </div>
+          </CardContent>
+        </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Submission</CardTitle>
+            <CardDescription>Source and workflow metadata.</CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-3 text-sm">
             <div>
               <p className="text-slate-500">Inquiry ID</p>
-              <p className="font-medium">{submission.inquiryId}</p>
+              <p className="font-medium break-all">{submission.inquiryId}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Source</p>
-              <p className="font-medium">{submission.source}</p>
+              <p className="font-medium break-all">{submission.source}</p>
+            </div>
+
+            <div>
+              <p className="text-slate-500">Status</p>
+              <p className="font-medium">{submission.status}</p>
             </div>
 
             <div>
@@ -316,7 +339,7 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>Inquiry Details</CardTitle>
             <CardDescription>
@@ -334,27 +357,27 @@ export default function IntakeDetailPage({ params }: IntakeDetailPageProps) {
 
             <div>
               <p className="text-slate-500">Goal</p>
-              <p>{submission.goal || "-"}</p>
+              <p className="whitespace-pre-wrap">{formatValue(submission.goal)}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Blocker</p>
-              <p>{submission.blocker || "-"}</p>
+              <p className="whitespace-pre-wrap">{formatValue(submission.blocker)}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Budget</p>
-              <p>{submission.budget || "-"}</p>
+              <p>{formatValue(submission.budget)}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Timeline</p>
-              <p>{submission.timeline || "-"}</p>
+              <p>{formatValue(submission.timeline)}</p>
             </div>
 
             <div>
               <p className="text-slate-500">Message</p>
-              <p>{submission.message || "-"}</p>
+              <p className="whitespace-pre-wrap">{formatValue(submission.message)}</p>
             </div>
           </CardContent>
         </Card>

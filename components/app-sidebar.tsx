@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
+import { useCrm } from "@/context/crm-context";
+import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   Users,
@@ -41,6 +44,10 @@ const navItems = [
 
 export function AppSidebar() {
   const router = useRouter();
+  const { intakeSubmissions } = useCrm();
+  const newIntakeCount = intakeSubmissions.filter(
+    (submission) => submission.status === "New"
+  ).length;
 
   async function handleLogout() {
     await fetch("/api/auth/logout", {
@@ -69,7 +76,15 @@ export function AppSidebar() {
               className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"
             >
               <Icon className="h-4 w-4" />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.href === "/intake" && newIntakeCount > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="bg-slate-100 text-slate-950"
+                >
+                  {newIntakeCount > 99 ? "99+" : newIntakeCount}
+                </Badge>
+              )}
             </Link>
           );
         })}

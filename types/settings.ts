@@ -1,5 +1,6 @@
 export type AppSettings = {
   id: string;
+  key?: string;
   businessName: string;
   defaultEmail?: string;
   defaultHourlyRate: number;

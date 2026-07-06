@@ -13,7 +13,12 @@ export type FileRecord = {
   projectId?: string;
   projectName?: string;
   name: string;
+  originalName?: string;
+  mimeType?: string;
   type: FileRecordType;
   size: string;
+  sizeBytes?: number;
+  storagePath?: string;
+  relativePath?: string;
   uploadedAt: string;
 };
